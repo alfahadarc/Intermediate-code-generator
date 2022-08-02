@@ -71,3 +71,22 @@ SymbolInfo::parameter SymbolInfo::getParameter(int index)
 {
     return parameter_list[index];
 }
+
+void SymbolInfo::setAsmSymbol(string sym)
+{
+    this->asm_symbol = sym;
+    return;
+}
+string SymbolInfo::getAsmSymbol()
+{
+    return asm_symbol;
+}
+void SymbolInfo::setAsmCode(string code)
+{
+    this->asm_code = code;
+    return;
+}
+string SymbolInfo::getAsmCode()
+{
+    return asm_code;
+}

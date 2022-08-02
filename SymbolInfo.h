@@ -14,6 +14,9 @@ private:
     string return_type;
     int array_size;
 
+    string asm_symbol;
+    string asm_code;
+
 public:
     // function parameter and type
     struct parameter
@@ -34,6 +37,11 @@ public:
     void setType(string t);
 
     // new added
+
+    void setAsmSymbol(string sym);
+    string getAsmSymbol();
+    void setAsmCode(string code);
+    string getAsmCode();
 
     // variable type and function ret type check
     void setReturnType(string type);
