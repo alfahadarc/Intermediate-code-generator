@@ -15,12 +15,12 @@ int yylex(void);
 
 int error_count=0;
 int line = 1;
-int scope = 1;
+int scope = 0;
 int semantic_error = 0;
 
 //file 
 extern FILE *yyin;
-FILE *input, *logout, *error;
+FILE *input, *logout, *error, *asmCode, *optAsmCode;
 
 SymbolTable table(10);
 
@@ -53,16 +53,45 @@ vector<string>argument_list;
 
 //variable and array insert in symbol table
 
+vector<string>data_segment_list;
+
 void insert_variable(variable_array var , string type){
 	SymbolInfo* newSymbol = new SymbolInfo(var.variable_name, "ID");
 	newSymbol->setReturnType(type);
 	newSymbol->setArraySize(var.variable_size);
 
-	//table.insertInTable_Symbol(newSymbol);
-	if(table.insertInTable_Symbol(newSymbol)){
-		//printf("param: %s \n \n",newSymbol->getName().c_str());
+	//for asm
+	string scope_number = to_string(scope);
+	string name = var.variable_name;
+	name = name+scope_number;
+	newSymbol->setAsmSymbol(name);
+
+	
+
+	if(var.variable_size == -1){
+		name = name+ " dw ?" ;
+		data_segment_list.push_back(name);
+
+		//test
+		fprintf(asmCode, "at line %d: %s\n",  line, name.c_str());
 	}else{
-		//printf("no add param: %s \n \n",newSymbol->getName().c_str());
+		//array x dw 3 dup(?)
+		string size = to_string(var.variable_size);
+		string n = var.variable_name;
+		n = n+" dw "; //x dw
+		n = n+size ; // x dw 3
+		n = n+" dup(?)";// x dw 3 dup(?)
+		data_segment_list.push_back(n);
+
+		
+		fprintf(asmCode, "at line %d: %s\n",  line, n.c_str());
+	}
+
+	
+	if(table.insertInTable_Symbol(newSymbol)){
+		
+	}else{
+		
 		error_count++;
 		fprintf(error, "Error at line %d: Multiple declaration of '%s'\n",  line, newSymbol->getName().c_str());
 
@@ -95,7 +124,7 @@ void yyerror(const char *s)
 %nonassoc ELSE
 %define parse.error verbose
 
-%start start
+%start var_declaration
 
 
 %%
@@ -347,9 +376,8 @@ start_scope: {
 }
  		    
 var_declaration : type_specifier declaration_list SEMICOLON {
-			$$ = new SymbolInfo($1->getName()+" "+$2->getName() + ";\n", "NON_TERMINAL");
-			fprintf(logout, "Line %d: var_declaration : type_specifier declaration_list SEMICOLON\n",line);
-			fprintf(logout, "%s %s;\n\n",$1->getName().c_str(),$2->getName().c_str());
+			$$ = new SymbolInfo("", "var_declaration");
+
 
 			if($1->getName() == "void"){
 				//need to  check
@@ -369,34 +397,26 @@ var_declaration : type_specifier declaration_list SEMICOLON {
  		 
 type_specifier	: INT {
 			$$ = new SymbolInfo("int", "NON_TERMINAL");
-			fprintf(logout,"Line %d: type_specifier	: INT \n ",line );
-			fprintf(logout, "int \n\n");
 			type_defination = "int";
 
 }
  		| FLOAT {
 			$$ = new SymbolInfo("float", "NON_TERMINAL");
-			fprintf(logout,"Line %d: type_specifier	: FLOAT \n ",line );
-			fprintf(logout, "float \n\n");
 			type_defination = "float";
 		}
  		| VOID {
 			$$ = new SymbolInfo("void", "NON_TERMINAL");
-			fprintf(logout,"Line %d: type_specifier	: VOID \n ",line );
-			fprintf(logout, "void \n\n");
 			type_defination = "void";
 		}
  		;
 id: ID {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
 		name_defination = $1->getName();
-		//printf("%s", $$->getType().c_str());
 } 		
 declaration_list : declaration_list COMMA id {
 	//variables
-		$$ = new SymbolInfo($1->getName()+","+$3->getName(), "NON_TERMINAL");
-		fprintf(logout,"Line %d: declaration_list : declaration_list COMMA ID \n ",line );
-		fprintf(logout, "%s , %s\n\n", $1->getName().c_str(), $3->getName().c_str());
+		$$ = new SymbolInfo("", "declaration_list");
+		
 
 		//add to list_Of_variables
 
@@ -414,10 +434,8 @@ declaration_list : declaration_list COMMA id {
 }
  		  | declaration_list COMMA id LTHIRD CONST_INT RTHIRD	{
 			//for array decl
-		$$ = new SymbolInfo($1->getName()+","+$3->getName() + "[" + $5->getName() +"]", "NON_TERMINAL");
-		fprintf(logout,"Line %d: declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD \n ",line );
-		fprintf(logout, "%s , %s [%s]\n\n", $1->getName().c_str(), $3->getName().c_str(),$5->getName().c_str());
-
+		$$ = new SymbolInfo("", "declaration_list");
+		
 		//add to list
 		newVariable.variable_name = $3->getName();
 		newVariable.variable_size = stoi($5->getName());
@@ -433,10 +451,8 @@ declaration_list : declaration_list COMMA id {
 
 		  }
  		  | id	{
-			$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-			fprintf(logout,"Line %d: declaration_list : id \n ",line );
-			fprintf(logout, "%s \n\n", $1->getName().c_str());
-
+			$$ = new SymbolInfo($1->getName(), "declaration_list");
+			
 		//add to list
 		newVariable.variable_name = $1->getName();
 		newVariable.variable_size = -1;
@@ -452,10 +468,8 @@ declaration_list : declaration_list COMMA id {
 
 		  }
  		  | id LTHIRD CONST_INT RTHIRD 	{
-			$$ = new SymbolInfo($1->getName()+"["+$3->getName()+"]", "NON_TERMINAL");
-			fprintf(logout,"Line %d: declaration_list : id LTHIRD CONST_INT RTHIRD \n ",line );
-			fprintf(logout, "%s [%s] \n\n", $1->getName().c_str(), $3->getName().c_str());
-
+			$$ = new SymbolInfo($1->getName(), "declaration_list");
+			
 		//add to list
 		newVariable.variable_name = $1->getName();
 		newVariable.variable_size = stoi($3->getName());
@@ -985,27 +999,43 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-	logout= fopen(argv[2],"w");//logout file
-	fclose(logout);
-	error= fopen(argv[3],"w");//error file
+	//logout= fopen(argv[2],"w");//logout file
+	//fclose(logout);
+	error= fopen(argv[2],"w");//error file
 	fclose(error);
+
+	asmCode= fopen(argv[3],"w");//asm file
+	fclose(asmCode);
+
+	optAsmCode= fopen(argv[4],"w");//optasm file
+	fclose(optAsmCode);
+
 	
-	logout= fopen(argv[2],"a");
-	error= fopen(argv[3],"a");
+	//logout= fopen(argv[2],"a");
+	error= fopen(argv[2],"a");
+	asmCode= fopen(argv[3],"a");
+	optAsmCode= fopen(argv[4],"a");
 	
 
 	yyin=input;
 	yyparse();
 	
 	//print table
-	fprintf(logout, "\n\n");
+	/* fprintf(logout, "\n\n");
 	table.printAllScopeTable();
-	fprintf(logout, "\n\n");
+	fprintf(logout, "\n\n"); */
 
-	fprintf(logout, "Total Line: %d\n",line);
-	fprintf(logout, "Total Error: %d\n", error_count);
-	fclose(logout);
+	/* fprintf(logout, "Total Line: %d\n",line);
+	fprintf(logout, "Total Error: %d\n", error_count); */
+	//fclose(logout);
 	fclose(error);
+	fclose(asmCode);
+
+	//optimizing--------------------------------
+		//freopen("code.asm","r",stdin);
+		//optimizeCode();
+	
+		//fclose(optimized_asmCode);
 	
 	return 0;
 }

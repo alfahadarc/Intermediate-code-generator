@@ -41,14 +41,11 @@ MULOP [*/%]
 
 "if"	{return IF;}
 "for"	{return FOR;}
-"do"	{return DO;}
 "int"	{return INT;}		
 "float"	{return FLOAT;}
 "void"	{return VOID;}				
 "else"	{return ELSE;}
 "while"	{return WHILE;}
-"char"	{return CHAR;}
-"double"	{return DOUBLE;}
 "return"	{return RETURN;}
 "println"	{return PRINTLN;}
 

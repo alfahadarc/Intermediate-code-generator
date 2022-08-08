@@ -26,4 +26,4 @@ g++ -fpermissive -w -c -o l.o lex.yy.c
 echo 'Generated the scanner object file'
 g++ symbolInfo.cpp scopeTable.cpp symbolTable.cpp y.o l.o -lfl -o 1805033
 echo 'All ready, running'
-./1805033 input.c log.txt error.txt
+./1805033 input.c error.txt asmCode.asm optAsmCode.asm
