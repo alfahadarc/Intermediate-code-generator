@@ -1,0 +1,52 @@
+Line 3: statement : var_declaration
+
+
+Line 3: statements : statement
+
+
+Line 4: factor: CONST_INT
+4
+
+Line 4:unary_expression : factor
+4
+
+Line 4: term : unary_expression
+4
+
+Line 4:unary_expression : factor
+
+
+Line 4: term : unary_expression
+
+
+Line 4: expression_statement 	: expression SEMICOLON
+;
+
+Line 4: statement : expression_statement
+;
+
+Line 4: statements : statements statement
+ ;
+
+Line 5:compound_statement : LCURL statements RCURL 
+{;}
+
+
+ScopeTable # 1.1 
+list: 7 -> <a:ID>
+ScopeTable # 1 
+list: 7 -> <main:ID>
+
+
+Line 5: func_definition : type_specifier ID LPAREN RPAREN compound_statement
+int main (  ) {;}
+
+Line 5: unit : func_definition
+int main(){;} 
+
+Line 5: program : unit
+int main(){;} 
+
+Line 5: start: program
+int main(){;} 
+

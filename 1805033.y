@@ -1,5 +1,6 @@
 %{
 #include<iostream>
+#include<fstream>
 #include<cstdlib>
 #include<cstring>
 #include<cmath>
@@ -17,17 +18,20 @@ int error_count=0;
 int line = 1;
 int scope = 0;
 int semantic_error = 0;
+int label_count = 0; 
+int temp_count = 0;
 
 //file 
 extern FILE *yyin;
-FILE *input, *logout, *error, *asmCode, *optAsmCode;
+FILE *input, *logout, *error;
+ofstream asmCode("asmCode.asm"), optAsmCode("optAsmCode.asm");
 
 SymbolTable table(10);
 
 
 //function dec and defination check name and return type
-string type_defination, type_declaration;  
-string name_defination, name_declaration; 
+string type_defination, type_declaration;  //type, type_final;
+string name_defination, name_declaration; //name, name_final;
 
 //variable structure
 struct variable_array{
@@ -63,7 +67,7 @@ void insert_variable(variable_array var , string type){
 	//for asm
 	string scope_number = to_string(scope);
 	string name = var.variable_name;
-	name = name+scope_number;
+	name = name+scope_number;//name0
 	newSymbol->setAsmSymbol(name);
 
 	
@@ -73,18 +77,17 @@ void insert_variable(variable_array var , string type){
 		data_segment_list.push_back(name);
 
 		//test
-		fprintf(asmCode, "at line %d: %s\n",  line, name.c_str());
+		//fprintf(asmCode, "at line %d: %s\n",  line, name.c_str());
 	}else{
 		//array x dw 3 dup(?)
 		string size = to_string(var.variable_size);
-		string n = var.variable_name;
-		n = n+" dw "; //x dw
-		n = n+size ; // x dw 3
-		n = n+" dup(?)";// x dw 3 dup(?)
-		data_segment_list.push_back(n);
+		name = name+" dw "; //x dw
+		name = name+size ; // x dw 3
+		name = name+" dup(?)";// x dw 3 dup(?)
+		data_segment_list.push_back(name);
 
 		
-		fprintf(asmCode, "at line %d: %s\n",  line, n.c_str());
+		//fprintf(asmCode, "at line %d: %s\n",  line, name.c_str());
 	}
 
 	
@@ -99,6 +102,16 @@ void insert_variable(variable_array var , string type){
 }
 
 //function insert in symbol table
+
+//new termp
+
+string newTemp(){
+	string str = "t";
+	str = str + to_string(temp_count);
+	temp_count++;
+	return str;
+
+}
 
 
 
@@ -124,7 +137,7 @@ void yyerror(const char *s)
 %nonassoc ELSE
 %define parse.error verbose
 
-%start var_declaration
+%start start
 
 
 %%
@@ -602,32 +615,24 @@ expression_statement 	: SEMICOLON	{
 	  
 variable : id {
 			$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: variable : ID\n", line);
-			fprintf(logout, "%s\n\n",$1->getName().c_str() );
-
-
-				//test----------------
-			/*		$1->setArraySize(-1);
-					table.insertInTable_Symbol($1);
-					$1->setReturnType("void"); */
-				//test end------------
+			
 			//declaration check
 			SymbolInfo* temp = table.lookUpTable($1->getName());
-			//printf("%d\n\n",temp->getArraySize());
+			
 			if(temp == NULL){
-				semantic_error++;
 				error_count++;
 				fprintf(error,"Error at line %d: variable '%s' not declared\n",line,$1->getName().c_str());
 			} else {
+				$$->setArraySize(-1);
                 if(temp->getReturnType() != "void") {
                     $$->setReturnType(temp->getReturnType());
+					$$->setAsmSymbol(temp->getAsmSymbol());
                 } else {
                     $$->setReturnType("void");  //matching function found with return type void
                 }
             }
 			//variable check -1
 			if(temp != NULL && temp->getArraySize()!= -1){
-				semantic_error++;
 				error_count++;
 				fprintf(error,"Error at line %d: '%s' not a variable\n",line,$1->getName().c_str());
 			}
@@ -635,25 +640,18 @@ variable : id {
 }		
 	 | id LTHIRD expression RTHIRD {
 		//array variables use
-			$$ = new SymbolInfo($1->getName()+"["+$3->getName()+"]", "NON_TERMINAL");
-			fprintf(logout, "Line %d: variable : ID LTHIRD expression RTHIRD\n", line);
-			fprintf(logout, "%s[%s]\n\n",$1->getName().c_str() ,$3->getName().c_str());
-
-
-			//test----------------
-			/*		$1->setArraySize(5);
-					table.insertInTable_Symbol($1);
-					$1->setReturnType("int"); */
-				//test end------------
+			$$ = new SymbolInfo("", "NON_TERMINAL");
+			
 			//undeclared check
 			SymbolInfo* temp = table.lookUpTable($1->getName());
 			if(temp==NULL){
-				semantic_error++;
 				error_count++;
 				fprintf(error,"Error at line %d: variable '%s' not declared\n",line,$1->getName().c_str());
 			}else {
                 if(temp->getReturnType() != "void") {
+					$$->setArraySize(temp->getArraySize());
                     $$->setReturnType(temp->getReturnType());
+					$$->setAsmSymbol(temp->getAsmSymbol());
                 } else {
                     $$->setReturnType("void");  //matching function found with return type void
                 }
@@ -661,7 +659,6 @@ variable : id {
 
 			//array check
 			if(temp != NULL && (temp->getArraySize()== -1 || temp->getArraySize()==-2 || temp->getArraySize() == -3)){
-				semantic_error++;
 				error_count++;
 				fprintf(error,"Error at line %d: '%s' not a array\n",line,$1->getName().c_str());
 			}
@@ -673,66 +670,69 @@ variable : id {
 				fprintf(error,"Error at line %d: array index is not int\n",line);
 
 			}
-			// else{
-			// 	$1->setArraySize(stoi($3->getName()));//set array size
-			// }
-
-			//printf("%d\n", $1->getArraySize());
-
+			
 			//void function check
 			if($3->getReturnType()=="void"){
-				semantic_error++;
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
 
-
+		//code gen
+		asmCode<< "\tmov bx, "+$3->getAsmSymbol()+"\n\t"+"add bx, bx"+"\n";
+		cout<<"\tmov bx, "+$3->getAsmSymbol()+"\n\t"+"add bx, bx"+"\n";
+		
 	 }
 	 ;
 	 
 expression : logic_expression	{
-			$$ = new SymbolInfo($1->getName(), "NON_TERMINAL"); 
-			fprintf(logout, "Line %d: expression : logic_expression\n", line);
-			fprintf(logout, "%s\n\n",$1->getName().c_str() );
+			$$ = new SymbolInfo("", "NON_TERMINAL"); 
+			
 			//type
 			$$->setReturnType($1->getReturnType());
+			type_defination = $1->getReturnType();
+
+			$$->setAsmSymbol($1->getAsmSymbol());
+			//$$->setAsmCode($1->getAsmCode());
 }
 	   | variable ASSIGNOP logic_expression {
-		$$ = new SymbolInfo($1->getName()+"="+$3->getName(), "NON_TERMINAL"); 
-			fprintf(logout, "Line %d: expression : variable ASSIGNOP logic_expression\n", line);
-			fprintf(logout, "%s=%s\n\n",$1->getName().c_str(), $3->getName().c_str());
+		$$ = new SymbolInfo("", "NON_TERMINAL"); 
+			
 			//if floating point number is assigned to an integer type variable
 			if($1->getReturnType()!= $3->getReturnType()){
-				semantic_error++;
 				error_count++;
 				fprintf(error, "Error at line %d: Assignment of wrong variables\n", line);
 			}
 			//void function call 
 			if($3->getReturnType()=="void"){
-				semantic_error++;
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression(\n", line);
 		}
 
-			//printf("%s\n", $3->getReturnType().c_str());
 			
 			//type
 			$$->setReturnType($1->getReturnType());
+			type_defination = $1->getReturnType();
+
+			//code genaration
+			if($1->getArraySize()>-1){
+				//array
+			}else{
+				//variable
+			}
 	   }	
 	   ;
 			
 logic_expression : rel_expression {
-			$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: logic_expression : rel_expression\n", line);
-			fprintf(logout, "%s\n\n",$1->getName().c_str() );
+			$$ = new SymbolInfo("", "NON_TERMINAL");
+			
 			//type propagation
 			$$->setReturnType($1->getReturnType());
+			$$->setAsmSymbol($1->getAsmSymbol());
+			//$$->setAsmCode($1->getAsmCode());
 }	
 		 | rel_expression LOGICOP rel_expression {
 			$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: logic_expression : rel_expression LOGICOP rel_expression\n", line);
-			fprintf(logout, "%s %s %s\n",$1->getName().c_str(),$2->getName().c_str(),$3->getName().c_str());
-
+			
 
 //semantic the result of RELOP and LOGICOP operation should be an integer
 			$$->setReturnType("int");
@@ -741,25 +741,25 @@ logic_expression : rel_expression {
 				error_count++;
 				fprintf(error, "Error at line %d: RELOP and LOGICOP operation should be an integer\n", line);
 			}
+
+			//code gen
 		 }	
 		 ;
 			
 rel_expression	: simple_expression {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: rel_expression : simple_expression\n", line);
-			fprintf(logout, "%s\n\n",$1->getName().c_str() );
 
 			//type may be propagate to simple to rel
 			$$->setReturnType($1->getReturnType());
+
+			$$->setAsmSymbol($1->getAsmSymbol());
+			//$$->setAsmCode($1->getAsmCode());
 }
 		| simple_expression RELOP simple_expression	{
 		$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: logic_expression : simple_expression RELOP simple_expression\n", line);
-			fprintf(logout, "%s %s %s\n\n",$1->getName().c_str(),$2->getName().c_str(),$3->getName().c_str());
-//semantic the result of RELOP and LOGICOP operation should be an integer
+			//semantic the result of RELOP and LOGICOP operation should be an integer
 			$$->setReturnType("int");
 			if($1->getReturnType() != "int" || $3->getReturnType() != "int"){
-				semantic_error++;
 				error_count++;
 				fprintf(error, "Error at line %d: RELOP and LOGICOP operation should be an integer\n", line);
 			}
@@ -768,11 +768,11 @@ rel_expression	: simple_expression {
 				
 simple_expression : term {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-			fprintf(logout, "Line %d: simple_expression : term\n", line);
-			fprintf(logout, "%s\n\n",$1->getName().c_str() );
-
+			
 			//type may be set term to simple_expression
 			$$->setReturnType($1->getReturnType());
+			$$->setAsmSymbol($1->getAsmSymbol());
+			//$$->setAsmCode($1->getAsmCode());
 }
 		  | simple_expression ADDOP term {
 			$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -946,11 +946,28 @@ factor	: variable {
 		$$->setReturnType("float");
 	}
 	| variable INCOP {
-		$$ = new SymbolInfo($1->getName()+"++", "NON_TERMINAL");
-		fprintf(logout,"Line %d: factor: variable INCOP\n",line );
-		fprintf(logout,"%s++\n\n",$1->getName().c_str());
+		$$ = new SymbolInfo("", "NON_TERMINAL");
+		
 		//type giving
 		$$->setReturnType($1->getReturnType());
+
+		//code gen
+		string temp1;
+		if($1->getArraySize()>-1){
+			//array
+			temp1 = newTemp();
+			data_segment_list.push_back(temp1+" dw ?");
+			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
+			$$->setAsmSymbol(temp1);
+		}else{
+			//variable
+			temp1 = newTemp();
+			data_segment_list.push_back(temp1+" dw ?");
+			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n mov\t" + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
+			$$->setAsmSymbol(temp1);
+		}
 	}
 	| variable DECOP {
 		$$ = new SymbolInfo($1->getName()+"--", "NON_TERMINAL");
@@ -999,22 +1016,22 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-	//logout= fopen(argv[2],"w");//logout file
-	//fclose(logout);
+	logout= fopen(argv[3],"w");//logout file
+	fclose(logout);
 	error= fopen(argv[2],"w");//error file
 	fclose(error);
 
-	asmCode= fopen(argv[3],"w");//asm file
-	fclose(asmCode);
+	/* asmCode.open(argv[3]);//asm file
+	asmCode.close();
 
-	optAsmCode= fopen(argv[4],"w");//optasm file
-	fclose(optAsmCode);
+	optAsmCode.open(argv[4]);//optasm file
+	optAsmCode.close(); */
 
 	
-	//logout= fopen(argv[2],"a");
+	logout= fopen(argv[3],"a");
 	error= fopen(argv[2],"a");
-	asmCode= fopen(argv[3],"a");
-	optAsmCode= fopen(argv[4],"a");
+	/* asmCode= fopen(argv[3],"a");
+	optAsmCode= fopen(argv[4],"a"); */
 	
 
 	yyin=input;
@@ -1029,7 +1046,7 @@ int main(int argc,char *argv[])
 	fprintf(logout, "Total Error: %d\n", error_count); */
 	//fclose(logout);
 	fclose(error);
-	fclose(asmCode);
+	/* fclose(asmCode); */
 
 	//optimizing--------------------------------
 		//freopen("code.asm","r",stdin);
