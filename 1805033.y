@@ -958,6 +958,7 @@ factor	: variable {
 			temp1 = newTemp();
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
+			asmCode<<"\n\t;variable INCOP\n\n";
 			cout<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
 			$$->setAsmSymbol(temp1);
 		}else{
@@ -965,16 +966,35 @@ factor	: variable {
 			temp1 = newTemp();
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n mov\t" + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
+			asmCode<<"\n\t;variable INCOP\n\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
 			$$->setAsmSymbol(temp1);
 		}
 	}
 	| variable DECOP {
-		$$ = new SymbolInfo($1->getName()+"--", "NON_TERMINAL");
-		fprintf(logout,"Line %d: factor: variable DECOP\n",line );
-		fprintf(logout,"%s--\n\n",$1->getName().c_str());
+		$$ = new SymbolInfo("", "NON_TERMINAL");
+		
 		//type giving
 		$$->setReturnType($1->getReturnType());
+		//code gen
+		string temp1;
+		if($1->getArraySize()>-1){
+			//array
+			temp1 = newTemp();
+			data_segment_list.push_back(temp1+" dw ?");
+			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "[bx]\n";
+			asmCode<<"\n\t;variable DECOP\n\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "[bx]\n";
+			$$->setAsmSymbol(temp1);
+		}else{
+			//variable
+			temp1 = newTemp();
+			data_segment_list.push_back(temp1+" dw ?");
+			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "\n";
+			asmCode<<"\n\t;variable DECOP\n\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "\n";
+			$$->setAsmSymbol(temp1);
+		}
 	}
 	;
 	
