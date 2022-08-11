@@ -115,7 +115,12 @@ string newTemp(){
 
 }
 
-
+string newLabel(){
+	string str = "L";
+	str = str + to_string(label_count);
+	label_count++;
+	return str;
+}
 
 
 void yyerror(const char *s)
@@ -829,13 +834,36 @@ unary_expression : ADDOP unary_expression  {
 			fprintf(logout, "!%s\n\n",$1->getName().c_str(), $2->getName().c_str());
 			//type propagation
 			$$->setReturnType($2->getReturnType());
+			//code if neg
+			if($1->getName() == "-"){
+				string temp = newTemp();
+				data_segment_list.push_back(temp);
+
+				asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
+				cout<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
+				$$->setAsmSymbol(temp);
+			}else{
+				$$->setAsmSymbol($2->getAsmSymbol());
+			}
 }
 		 | NOT unary_expression {
 			$$ = new SymbolInfo("!"+$2->getName(), "NON_TERNINAL");
 			fprintf(logout, "Line %d:unary_expression : NOT unary_expression\n", line);
 			fprintf(logout, "!%s\n\n", $2->getName().c_str());
 			//type propagation
-			$$->setReturnType($2->getReturnType());
+			$$->setReturnType("int");
+			//code
+			string label1 = newLabel();
+            string label2 = newLabel();
+            string temp = newTemp();
+            data_segment_list.push_back(temp+" dw ?");
+
+			asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+			asmCode<<"\t"+label1+": \n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+            
+			cout<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+			cout<<"\t"+label1+": \n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+            $$->setAsmSymbol(temp);
 		 }
 		 | factor {
 			$$ = new SymbolInfo($1->getName(), "NON_TERNINAL");
@@ -843,6 +871,7 @@ unary_expression : ADDOP unary_expression  {
 			fprintf(logout, "%s\n\n", $1->getName().c_str());
 			//type propagation
 			$$->setReturnType($1->getReturnType());
+			$$->setAsmSymbol($1->getAsmSymbol());
 		 }
 		 ;
 	

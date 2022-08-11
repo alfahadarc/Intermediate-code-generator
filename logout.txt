@@ -52,23 +52,11 @@ Line 8: factor: CONST_INT
 Line 8:unary_expression : factor
 2
 
-Line 8: term : unary_expression
-2
-
-Line 8: arguments : logic_expression
- 
-
-Line 8: argument_list : arguments
- 
-
-Line 8:factor: ID LPAREN argument_list RPAREN
-fun()
-
-Line 8:unary_expression : factor
-fun()
+Line 8:unary_expression : NOT unary_expression
+!2
 
 Line 8: term : unary_expression
-fun()
+!2
 
 Line 8: expression_statement 	: expression SEMICOLON
 ;
