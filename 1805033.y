@@ -802,6 +802,7 @@ term :	unary_expression	{
 			fprintf(logout, "%s\n\n",$1->getName().c_str() );
 			//type may be set term to unary_expression
 			$$->setReturnType($1->getReturnType());
+			$$->setAsmSymbol($1->getAsmSymbol());
 
 }
      |  term MULOP unary_expression	{
@@ -811,7 +812,6 @@ term :	unary_expression	{
 //Both the operands of the modulus operator should be integers
 			if($2->getName()=="%"){
 				if($1->getReturnType()!="int" || $3->getReturnType()!="int"){
-				semantic_error++;
 				error_count++;
 				fprintf(error, "Error at line %d: Both the operands of the modulus operator should be integer\n", line);	
 				}
@@ -824,6 +824,35 @@ term :	unary_expression	{
 					}
 			}else{
 				$$->setReturnType("int");
+			}
+
+			//code
+			string temp = newTemp();
+            data_segment_list.push_back(temp+" dw ?");
+			if($2->getName() == "*"){
+				//mul
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov bx, "+$3->getAsmSymbol()+"\n\timul bx\n\tmov "+temp+", ax\n";
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov bx, "+$3->getAsmSymbol()+"\n\timul bx\n\tmov "+temp+", ax\n";
+				$$->setAsmSymbol(temp);
+			}else{
+				// div mod
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcwd\n";
+                asmCode<<"\tmov bx, "+$3->getAsmSymbol()+"\n\tidiv bx\n";
+
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcwd\n";
+				cout<<"\tmov bx, "+$3->getAsmSymbol()+"\n\tidiv bx\n";
+                
+                if($2->getName() == "/") {
+					asmCode<<"\tmov "+temp+", ax\n";
+					cout<<"\tmov "+temp+", ax\n";
+                    
+                } else {
+					asmCode<<"\tmov "+temp+", dx\n";
+					cout<<"\tmov "+temp+", dx\n";
+                    
+                }
+                
+                $$->setAsmSymbol(temp);
 			}
 	 }
      ;
