@@ -781,7 +781,7 @@ simple_expression : term {
 			//type may be set term to simple_expression
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
-			//$$->setAsmCode($1->getAsmCode());
+			
 }
 		  | simple_expression ADDOP term {
 			$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -793,6 +793,22 @@ simple_expression : term {
 			}else{
 				$$->setReturnType("int");
 			}
+
+			string temp = newTemp();
+            data_segment_list.push_back(temp+" dw ?");
+			//code
+			if($2->getName() == "+") {
+                /*addition */
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tadd ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tadd ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
+                $$->setAsmSymbol(temp);
+
+            } else {
+                /* ubtraction */
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tsub ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tsub ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
+                $$->setAsmSymbol(temp);
+            }
 		  }
 		  ;
 					

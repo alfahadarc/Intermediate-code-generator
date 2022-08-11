@@ -61,8 +61,11 @@ Line 8: factor: CONST_INT
 Line 8:unary_expression : factor
 5
 
-Line 8: term : term MULOP unary_expression
-2 * 5
+Line 8: term : unary_expression
+5
+
+Line 8: simple_expressio : simple_expression ADDOP term
+2 + 5
 
 Line 8: expression_statement 	: expression SEMICOLON
 ;
@@ -88,8 +91,11 @@ Line 9: factor: CONST_INT
 Line 9:unary_expression : factor
 7
 
-Line 9: term : term MULOP unary_expression
-6 / 7
+Line 9: term : unary_expression
+7
+
+Line 9: simple_expressio : simple_expression ADDOP term
+6 - 7
 
 Line 9: expression_statement 	: expression SEMICOLON
 ;
@@ -100,35 +106,8 @@ Line 9: statement : expression_statement
 Line 9: statements : statements statement
 ; ;
 
-Line 10: factor: CONST_INT
-6
-
-Line 10:unary_expression : factor
-6
-
-Line 10: term : unary_expression
-6
-
-Line 10: factor: CONST_INT
-7
-
-Line 10:unary_expression : factor
-7
-
-Line 10: term : term MULOP unary_expression
-6 % 7
-
-Line 10: expression_statement 	: expression SEMICOLON
-;
-
-Line 10: statement : expression_statement
-;
-
-Line 10: statements : statements statement
-;; ;
-
-Line 11:compound_statement : LCURL statements RCURL 
-{;;;}
+Line 10:compound_statement : LCURL statements RCURL 
+{;;}
 
 
 ScopeTable # 1.2 
@@ -140,17 +119,17 @@ list: 3 -> <fun:ID>
 list: 7 -> <main:ID>
 
 
-Line 11: func_definition : type_specifier ID LPAREN RPAREN compound_statement
-int main (  ) {;;;}
+Line 10: func_definition : type_specifier ID LPAREN RPAREN compound_statement
+int main (  ) {;;}
 
-Line 11: unit : func_definition
-int main(){;;;} 
+Line 10: unit : func_definition
+int main(){;;} 
 
-Line 11: program : program unit
+Line 10: program : program unit
 int fun(int a){
-return ;} int main(){;;;}
+return ;} int main(){;;}
 
-Line 11: start: program
+Line 10: start: program
 int fun(int a){
-return ;} int main(){;;;} 
+return ;} int main(){;;} 
 
