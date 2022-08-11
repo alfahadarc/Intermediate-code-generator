@@ -737,7 +737,6 @@ logic_expression : rel_expression {
 			//type propagation
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
-			//$$->setAsmCode($1->getAsmCode());
 }	
 		 | rel_expression LOGICOP rel_expression {
 			$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -752,6 +751,39 @@ logic_expression : rel_expression {
 			}
 
 			//code gen
+			string label1 = newLabel();
+            string label2 = newLabel();
+            string temp = newTemp();
+            data_segment_list.push_back(temp+" dw ?");
+
+            
+            if($2->getName() == "&&") {
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
+				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
+				asmCode<<"\tmov ax, 1\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
+				asmCode<<label1+":\n\tmov ax, 0\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
+				cout<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
+				cout<<"\tmov ax, 1\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
+				cout<<label1+":\n\tmov ax, 0\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+            } else {
+                //  "||" 
+
+				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
+				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
+				asmCode<<"\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
+				asmCode<<label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				
+				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
+				cout<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
+				cout<<"\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
+				cout<<label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+            }
+            
+            $$->setAsmSymbol(temp);
 		 }	
 		 ;
 			
@@ -760,9 +792,7 @@ rel_expression	: simple_expression {
 
 			//type may be propagate to simple to rel
 			$$->setReturnType($1->getReturnType());
-
 			$$->setAsmSymbol($1->getAsmSymbol());
-			//$$->setAsmCode($1->getAsmCode());
 }
 		| simple_expression RELOP simple_expression	{
 		$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -772,6 +802,62 @@ rel_expression	: simple_expression {
 				error_count++;
 				fprintf(error, "Error at line %d: RELOP and LOGICOP operation should be an integer\n", line);
 			}
+
+		/* symbol and code setting */
+            string label1 = newLabel();
+            string label2 = newLabel();
+            string temp = newTemp();
+            data_segment_list.push_back(temp+" dw ?");
+
+            
+			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
+			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
+
+            if($2->getName() == "<") {
+
+				asmCode<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+
+            } else if($2->getName() == "<=") {
+				asmCode<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+               
+
+			
+            } else if($2->getName() == ">") {
+				asmCode<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+			} else if($2->getName() == ">=") {
+				asmCode<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+               
+			} else if($2->getName() == "==") {
+				asmCode<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+              
+			} else {
+				// !=
+				asmCode<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+                asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				cout<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+
+                          }
+
+            $$->setAsmSymbol(temp);
 		}
 		;
 				
