@@ -58,6 +58,8 @@ vector<string>argument_list;
 //variable and array insert in symbol table
 
 vector<string>data_segment_list;
+vector<string>list_of_local; //func arguments
+vector<string>list_of_temp; //function call arguments
 
 void insert_variable(variable_array var , string type){
 	SymbolInfo* newSymbol = new SymbolInfo(var.variable_name, "ID");
@@ -644,6 +646,7 @@ variable : id {
 			
 			//undeclared check
 			SymbolInfo* temp = table.lookUpTable($1->getName());
+			
 			if(temp==NULL){
 				error_count++;
 				fprintf(error,"Error at line %d: variable '%s' not declared\n",line,$1->getName().c_str());
@@ -652,6 +655,7 @@ variable : id {
 					$$->setArraySize(temp->getArraySize());
                     $$->setReturnType(temp->getReturnType());
 					$$->setAsmSymbol(temp->getAsmSymbol());
+					//cout<<$$->getArraySize();
                 } else {
                     $$->setReturnType("void");  //matching function found with return type void
                 }
@@ -844,10 +848,22 @@ unary_expression : ADDOP unary_expression  {
 	
 factor	: variable {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
-		fprintf(logout, "Line %d:factor:variable\n", line);
-		fprintf(logout, "%s\n\n", $1->getName().c_str());
+		fprintf(logout, "Line %d:factor	: variable\n", line);
+			fprintf(logout, "%s\n\n", $1->getName().c_str());
 			//type propagation
 		$$->setReturnType($1->getReturnType());
+		$$->setArraySize($1->getArraySize());
+		$$->setAsmSymbol($1->getAsmSymbol());
+		//cout<<$$->getArraySize();
+		if($$->getArraySize()>-1){
+			
+			string temp = newTemp();
+			data_segment_list.push_back(temp);
+			asmCode<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
+			cout<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
+			$$->setAsmSymbol(temp);
+		}
+
 }
 	| id LPAREN argument_list RPAREN {
 		//function call
@@ -858,22 +874,16 @@ factor	: variable {
 		int found_defination = 0; //1 = good 0 = not found
 		int param_arg_size = 0; //1 = match 0 = not match
 
-		//test start-----------------
-/*		$1->setArraySize(-3);
-		table.insertInTable_Symbol($1);
-		$1->addParameter("int","a"); 	*/
-		//test end-----------------
+		bool allGood = false;
 		SymbolInfo* temp = table.lookUpTable($1->getName());
 
 		//null check
 		if(temp == NULL){
 			error_count++;
-			semantic_error++;
 			fprintf(error, "Error at line %d: no ID %s found \n",line,$1->getName().c_str());
 			
 		}else if(temp->getArraySize()!= -3){
 			error_count++;
-			semantic_error++;
 			fprintf(error, "Error at line %d: no %s function defination found \n",line,$1->getName().c_str());
 			
 
@@ -886,7 +896,8 @@ factor	: variable {
 			//defination found check argument with param
 			if(temp->getParameterSize()==1 && argument_list.size()==0 && temp->getParameter(0).parameter_type=="void"){
 				$$->setReturnType(temp->getReturnType());
-				//printf("void function call\n");
+				//good
+				allGood = true;
 			}else if(temp->getParameterSize()!= argument_list.size()){
 				error_count++;
 				semantic_error++;
@@ -912,12 +923,39 @@ factor	: variable {
 			}else{
 				//all good
 				$$->setReturnType(temp->getReturnType());
+				//good
+				allGood = true;
 			}
 		}
+
+		if(allGood){
+			string temp1 = newTemp();
+			data_segment_list.push_back(temp1+" dw ?");
+			asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n";
+			cout<<"\tpush ax\n\tpush bx\n\tpush address\n";
+
+			for(int i=0; i<list_of_temp.size(); i++){
+				asmCode<<"\tpush "+list_of_temp[i]+"\n";
+				cout<<"\tpush "+list_of_temp[i]+"\n";
+			}
+
+			asmCode<<"\tcall "+temp->getAsmSymbol()+"\n";
+			cout<<"\tcall "+temp->getAsmSymbol()+"\n";
+
+			if(temp->getReturnType()!="void"){
+				asmCode<<"\tpop "+temp1+"\n";
+				cout<<"\tpop "+temp1+"\n";
+			}
+
+			asmCode<<"\tpop address\n\tpop bx\n\tpop ax\n";
+			cout<<"\tpop address\n\tpop bx\n\tpop ax\n";
+			$$->setAsmSymbol(temp1);
+		}
 		argument_list.clear();
+		list_of_temp.clear();
 	}
 	| LPAREN expression RPAREN	{
-		$$ = new SymbolInfo("("+$2->getName()+")", "NON_TERMINAL");
+		$$ = new SymbolInfo("", "NON_TERMINAL");
 		fprintf(logout,"Line %d: factor: LPAREN expression RPAREN\n",line);
 		fprintf(logout,"(%s)\n\n",$2->getName().c_str());
 
@@ -937,6 +975,8 @@ factor	: variable {
 		fprintf(logout,"%s\n\n",$1->getName().c_str());
 		//type giving
 		$$->setReturnType("int");
+		//code
+		$$->setAsmSymbol($1->getName());
 	}
 	| CONST_FLOAT {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
@@ -944,6 +984,8 @@ factor	: variable {
 		fprintf(logout,"%s\n\n",$1->getName().c_str());
 		//type giving
 		$$->setReturnType("float");
+		//code
+		$$->setAsmSymbol($1->getName());
 	}
 	| variable INCOP {
 		$$ = new SymbolInfo("", "NON_TERMINAL");
@@ -1015,6 +1057,9 @@ arguments : arguments COMMA logic_expression	{
 			fprintf(logout, "%s , %s\n\n",$1->getName().c_str(),$3->getName().c_str());
 			//type checking for function call
 			argument_list.push_back($3->getReturnType());
+
+			//temp list
+			list_of_temp.push_back($3->getAsmSymbol());
 }
 	      | logic_expression	{
 			$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
@@ -1022,6 +1067,8 @@ arguments : arguments COMMA logic_expression	{
 			fprintf(logout, "%s \n\n",$1->getName().c_str());
 			//type checking for function call
 			argument_list.push_back($1->getReturnType());
+			//temp list
+			list_of_temp.push_back($1->getAsmSymbol());
 		  }
 	      ;
  
