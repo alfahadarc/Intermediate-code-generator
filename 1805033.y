@@ -723,11 +723,23 @@ expression : logic_expression	{
 			type_defination = $1->getReturnType();
 
 			//code genaration
+			asmCode<<"\n;variable ASSIGNOP logic_expression\n\n";
 			if($1->getArraySize()>-1){
-				//array
-			}else{
+			
+				string temp = newTemp();
+				data_segment_list.push_back(temp+" dw ?");
+
+				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n";
+				asmCode<<"\tmov "+$1->getAsmSymbol()+"[bx], ax\n\tmov "+temp+", ax\n";
+
+				
+				$$->setAsmSymbol(temp);
+		}else{
 				//variable
+				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tmov "+$1->getAsmSymbol()+", ax\n";
+                $$->setAsmSymbol($1->getAsmSymbol());
 			}
+			asmCode<<"\n;variable ASSIGNOP logic_expression\n\n";
 	   }	
 	   ;
 			
