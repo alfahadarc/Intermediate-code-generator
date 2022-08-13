@@ -128,6 +128,7 @@ void yyerror(const char *s)
 	error_count++;
 	fprintf(error, "Error at line %d: \"%s\" \n",  line, s);
 	fprintf(logout, "Error at line %d: \"%s\" \n",  line, s);
+	cout<<"Error at line "<<line<< " : "<<s<<endl;
 }
 
 
@@ -356,20 +357,14 @@ compound_statement : LCURL start_scope statements RCURL	{
 			fprintf(logout, "Line %d:compound_statement : LCURL statements RCURL \n", line);
 			fprintf(logout, "{%s}\n", $3->getName().c_str());
 
-			//new symboltable
-			fprintf(logout, "\n\n");
-			table.printAllScopeTable();
-			fprintf(logout, "\n\n");
+			
 			table.exitScope();
 }
  		    | LCURL start_scope RCURL	{
 			$$ = new SymbolInfo("{}", "NON_TERMINAL");
 			fprintf(logout, "Line %d:compound_statement : LCURL RCURL \n", line);
 			fprintf(logout, "{ }\n");
-			//new symboltable
-			fprintf(logout, "\n\n");
-			table.printAllScopeTable();
-			fprintf(logout, "\n\n");
+			
 			table.exitScope();
 			}
  		    ;
@@ -531,10 +526,10 @@ statement : var_declaration	{
 		fprintf(logout, "Line %d: statement : compound_statement\n", line);
 		fprintf(logout, "%s\n\n",$1->getName().c_str());
 	  }
-	  | FOR LPAREN expression_statement expression_statement expression RPAREN statement	{
-		$$ = new SymbolInfo("\nfor("+$3->getName()+$4->getName()+$5->getName()+")"+$7->getName(), "NON_TERMINAL");
+	  | FOR LPAREN expression_statement embeded_expression expression_statement embeded_expression expression embeded_expression RPAREN statement	{
+		$$ = new SymbolInfo("\nfor("+$3->getName()+$5->getName()+$7->getName()+")"+$10->getName(), "NON_TERMINAL");
 		fprintf(logout, "Line %d: statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement\n", line);
-		fprintf(logout,"for(%s %s %s) %s\n\n",$3->getName().c_str(),$4->getName().c_str(),$5->getName().c_str(),$7->getName().c_str());
+		fprintf(logout,"for(%s %s %s) %s\n\n",$3->getName().c_str(),$5->getName().c_str(),$7->getName().c_str(),$10->getName().c_str());
 
 			//void function check
 		if($5->getReturnType()=="void"){
@@ -542,8 +537,27 @@ statement : var_declaration	{
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
+
+		//codes
+		if(($3->getAsmSymbol() != ";") && ($5->getAsmSymbol() != ";")){
+			//cout<<"ok";
+			string label1 = newLabel();
+            string label2 = newLabel();
+
+			//asmCode<<"\t"+label1+":\n"+$5->getCode()+"\tmov ax, "+$5->getSymbol()+"\n\tcmp ax, 0\n\tje "+label2+"\n";
+			//asmCode<<$10->getCode()+$7->getCode()+"\tjmp "+label1+"\n\t"+label2+":\n";
+        
+           // $$->setCode("\t"+label1+(string)":\n"+$5->getCode()+(string)"\tmov ax, "+$5->getSymbol()+(string)"\n\tcmp ax, 0\n\tje "+label2+(string)"\n");
+           // $$->setCode($$->getCode()+$10->getCode()+$7->getCode()+(string)"\tjmp "+label1+(string)"\n\t"+label2+(string)":\n");
+
+		}else{
+			cout<<"not Ok";
+		}
 	  }
-	  | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE	{
+	  | IF LPAREN expression RPAREN {
+		string label = newLabel();
+		$<action>$ = label;
+	  } statement %prec LOWER_THAN_ELSE	{
 		$$ = new SymbolInfo("\nif("+$3->getName()+")"+$5->getName(), "NON_TERMINAL");
 		fprintf(logout, "Line %d: statement: IF LPAREN expression RPAREN statement\n", line);
 		fprintf(logout,"if(%s) %s\n\n",$3->getName().c_str(),$5->getName().c_str());
@@ -554,6 +568,9 @@ statement : var_declaration	{
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
+		//code
+		asmCode<<"\tmov ax, "$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje";
+		$3->getSymbol()+(string)"\n\tcmp ax, 0\n\tje "+label+(string)"\n"+$7->getCode()+(string)"\t"+label+(string)":\n"
 	  }
 	  | IF LPAREN expression RPAREN statement ELSE statement	{
 		$$ = new SymbolInfo("\nif("+$3->getName()+")"+$5->getName()+"else"+$7->getName(), "NON_TERMINAL");
@@ -583,6 +600,33 @@ statement : var_declaration	{
 		fprintf(logout,"Line %d:statement: PRINTLN LPAREN ID RPAREN SEMICOLON\n", line);
 		fprintf(logout,"println(%s);\n\n",$3->getName().c_str());
 
+		//code
+		SymbolInfo* temp = table.lookUpTable($3->getName());
+		string asmVar;
+		if(temp == NULL){
+			error_count++;
+			fprintf(error,"Error at line %d: variable '%s' not declared\n",line,$1->getName().c_str());
+			asmVar = "";
+		} else{
+			if(temp->getReturnType() != "void") {
+                    asmVar = temp->getAsmSymbol();
+                } else {
+                    asmVar = "";  // no id 
+                }
+		}
+		if((temp!=NULL) && (temp->getArraySize()!=-1)) { 
+			//found but not variable
+			error_count++;
+                fprintf(error,"Error at line %d: mismatch \n",line);
+
+                asmVar = "";  // no id available
+            }
+
+		//asm code
+		asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n\tpush "+asmVar+"\n\tcall println\n\tpop address\n\tpop bx\n\tpop ax\n";
+
+
+
 	  }
 	  | RETURN expression SEMICOLON	{
 		$$ = new SymbolInfo("\nreturn "+$2->getName()+";", "NON_TERMINAL");
@@ -594,8 +638,16 @@ statement : var_declaration	{
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
+
+		//code
+		asmCode<<"\tpush "+$2->getAsmSymbol()+"\n";
+
 	  }
 	  ;
+
+embeded_expression: {
+	type_declaration = type_defination;
+}
 	  
 expression_statement 	: SEMICOLON	{
 			$$ = new SymbolInfo(";", "NON_TERMINAL");
