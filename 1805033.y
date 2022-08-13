@@ -576,16 +576,23 @@ statement : var_declaration	{
 		asmCode<<"\n;if then else end\n\n";
 		
 	  }
-	  | WHILE LPAREN expression RPAREN statement	{
-		$$ = new SymbolInfo("\nwhile("+$3->getName()+")"+$5->getName(), "NON_TERMINAL");
-		fprintf(logout,"Line %d:statement: WHILE LPAREN expression RPAREN statement\n", line);
-		fprintf(logout,"while(%s)%s\n\n",$3->getName().c_str(),$5->getName().c_str());
+	  | WHILE LPAREN {
+		string while_start = newLabel();
+		string while_end = newLabel();
+		asmCode<<while_start+":\n";
 
-		if($3->getReturnType()=="void"){
-				semantic_error++;
-				error_count++;
-				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
-		}
+		//send label
+		$$ = new SymbolInfo(while_start, while_end);
+	  } expression {
+		string while_end = $3->getType();
+		asmCode<<"\tmov ax, "+$4->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+while_end+"\n";
+
+	  } RPAREN statement	{
+		string while_start = $3->getName();
+		string while_end = $3->getType();
+		asmCode<<"\tjmp "+while_start+"\n";
+		asmCode<<while_end+":\n";
+
 	  }
 	  | PRINTLN LPAREN ID RPAREN SEMICOLON {
 		$$ = new SymbolInfo("\nprintln("+$3->getName()+");", "NON_TERMINAL");
