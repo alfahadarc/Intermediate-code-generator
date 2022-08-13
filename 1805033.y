@@ -554,35 +554,27 @@ statement : var_declaration	{
 			cout<<"not Ok";
 		}
 	  }
-	  | IF LPAREN expression RPAREN {
-		string label = newLabel();
-		$<action>$ = label;
-	  } statement %prec LOWER_THAN_ELSE	{
-		$$ = new SymbolInfo("\nif("+$3->getName()+")"+$5->getName(), "NON_TERMINAL");
+	  | condition_rule %prec LOWER_THAN_ELSE	{
+		$$ = new SymbolInfo("", "NON_TERMINAL");
 		fprintf(logout, "Line %d: statement: IF LPAREN expression RPAREN statement\n", line);
-		fprintf(logout,"if(%s) %s\n\n",$3->getName().c_str(),$5->getName().c_str());
-
-			//void function check
-		if($3->getReturnType()=="void"){
-				semantic_error++;
-				error_count++;
-				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
+		
+		//label in $1->getName()
+		
+		asmCode<< $1->getName()+":\n";
+		asmCode<<"\n;if then end\n\n";
+		
 		}
-		//code
-		asmCode<<"\tmov ax, "$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje";
-		$3->getSymbol()+(string)"\n\tcmp ax, 0\n\tje "+label+(string)"\n"+$7->getCode()+(string)"\t"+label+(string)":\n"
-	  }
-	  | IF LPAREN expression RPAREN statement ELSE statement	{
-		$$ = new SymbolInfo("\nif("+$3->getName()+")"+$5->getName()+"else"+$7->getName(), "NON_TERMINAL");
+	  | condition_rule ELSE {
+		string label1 = newLabel();
+		asmCode<<"\tjmp "+label1+"\n";
+		asmCode<< $1->getName()+":\n";
+		$$ = new SymbolInfo(label1, "label");
+	  } statement	{
 		fprintf(logout, "Line %d: statement: IF LPAREN expression RPAREN statement ELSE statement\n", line);
-		fprintf(logout,"if(%s) %s else %s\n\n",$3->getName().c_str(),$5->getName().c_str(), $7->getName().c_str());
-
-			//void function check
-		if($3->getReturnType()=="void"){
-				semantic_error++;
-				error_count++;
-				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
-		}
+		
+		asmCode<< $3->getName()+":\n";
+		asmCode<<"\n;if then else end\n\n";
+		
 	  }
 	  | WHILE LPAREN expression RPAREN statement	{
 		$$ = new SymbolInfo("\nwhile("+$3->getName()+")"+$5->getName(), "NON_TERMINAL");
@@ -644,6 +636,15 @@ statement : var_declaration	{
 
 	  }
 	  ;
+condition_rule: IF LPAREN expression RPAREN {
+	string label = newLabel();
+	$$ = new SymbolInfo(label, "label");
+	//code
+	asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label+"\n";
+} statement{
+	$$ = $5;
+
+}
 
 embeded_expression: {
 	type_declaration = type_defination;

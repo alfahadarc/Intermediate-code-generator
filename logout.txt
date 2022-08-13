@@ -20,14 +20,6 @@ return ;
 Line 4:compound_statement : LCURL statements RCURL 
 {
 return ;}
-
-
-ScopeTable # 1.1 
-list: 7 -> <a:ID>
-ScopeTable # 1 
-list: 3 -> <fun:ID>
-
-
 Line 4: func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
 int fun ( int a ) {
 return ;}
@@ -64,39 +56,69 @@ Line 8:unary_expression : factor
 Line 8: term : unary_expression
 5
 
-Line 8: expression_statement 	: expression SEMICOLON
+Line 10: factor: CONST_INT
+0
+
+Line 10:unary_expression : factor
+0
+
+Line 10: term : unary_expression
+0
+
+Line 10: expression_statement 	: expression SEMICOLON
 ;
 
-Line 8: statement : expression_statement
+Line 10: statement : expression_statement
 ;
 
-Line 8: statements : statements statement
- ;
+Line 10: statements : statement
+;
 
-Line 9:compound_statement : LCURL statements RCURL 
+Line 11:compound_statement : LCURL statements RCURL 
+{;}
+Line 11: statement : compound_statement
 {;}
 
+Line 14: factor: CONST_INT
+10
 
-ScopeTable # 1.2 
-list: 7 -> <a:ID>
-list: 8 -> <b:ID>
-list: 9 -> <c:ID>
-ScopeTable # 1 
-list: 3 -> <fun:ID>
-list: 7 -> <main:ID>
+Line 14:unary_expression : factor
+10
 
+Line 14: term : unary_expression
+10
 
-Line 9: func_definition : type_specifier ID LPAREN RPAREN compound_statement
-int main (  ) {;}
+Line 14: expression_statement 	: expression SEMICOLON
+;
 
-Line 9: unit : func_definition
-int main(){;} 
+Line 14: statement : expression_statement
+;
 
-Line 9: program : program unit
+Line 14: statements : statement
+;
+
+Line 15:compound_statement : LCURL statements RCURL 
+{;}
+Line 15: statement : compound_statement
+{;}
+
+Line 15: statement: IF LPAREN expression RPAREN statement ELSE statement
+Line 15: statements : statements statement
+ L2
+
+Line 16:compound_statement : LCURL statements RCURL 
+{L2}
+Line 16: func_definition : type_specifier ID LPAREN RPAREN compound_statement
+int main (  ) {L2}
+
+Line 16: unit : func_definition
+int main(){L2} 
+
+Line 16: program : program unit
 int fun(int a){
-return ;} int main(){;}
+return ;} int main(){L2}
 
-Line 9: start: program
+Line 16: start: program
 int fun(int a){
-return ;} int main(){;} 
+return ;} int main(){L2} 
 
