@@ -603,6 +603,8 @@ expression_statement 	: SEMICOLON	{
 			fprintf(logout,";\n\n");
 			$$->setReturnType("int");
 			type_defination = "int";
+			//code
+			$$->setAsmSymbol(";");
 
 }			
 			| expression SEMICOLON {
@@ -617,6 +619,8 @@ expression_statement 	: SEMICOLON	{
 				error_count++;
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
+		//code 
+			$$->setAsmSymbol($$->getAsmSymbol());
 			}
 			;
 	  
