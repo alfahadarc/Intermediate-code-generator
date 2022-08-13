@@ -61,7 +61,7 @@ vector<string>data_segment_list;
 vector<string>list_of_local; //func arguments
 vector<string>list_of_temp; //function call arguments
 
-void insert_variable(variable_array var , string type){
+string insert_variable(variable_array var , string type){
 	SymbolInfo* newSymbol = new SymbolInfo(var.variable_name, "ID");
 	newSymbol->setReturnType(type);
 	newSymbol->setArraySize(var.variable_size);
@@ -101,6 +101,8 @@ void insert_variable(variable_array var , string type){
 		fprintf(error, "Error at line %d: Multiple declaration of '%s'\n",  line, newSymbol->getName().c_str());
 
 	}
+
+	return name;
 }
 
 //function insert in symbol table
@@ -376,6 +378,7 @@ start_scope: {
 			// parameter_list.push_back(newParameter);
 			//enter new scope
 			table.enterScope();
+			scope++;
 
 			//add parameter to symbol table
 			if(parameter_list.size()==1 && parameter_list[0].parameter_type == "void"){
@@ -384,7 +387,8 @@ start_scope: {
 				for(int count = 0; count < parameter_list.size(); count++){
 					newVariable.variable_name = parameter_list[count].parameter_name;
                     newVariable.variable_size = -1;
-                    insert_variable(newVariable, parameter_list[count].parameter_type);
+                    
+					list_of_local.push_back(insert_variable(newVariable, parameter_list[count].parameter_type));
 				}
 			}
 			parameter_list.clear();
@@ -393,6 +397,7 @@ start_scope: {
 var_declaration : type_specifier declaration_list SEMICOLON {
 			$$ = new SymbolInfo("", "var_declaration");
 
+			string none;
 
 			if($1->getName() == "void"){
 				//need to  check
@@ -402,7 +407,7 @@ var_declaration : type_specifier declaration_list SEMICOLON {
 			}else{
 				for(int i=0; i<list_of_Variables.size(); i++){
 					//printf("%d\n\n",list_of_Variables[i].variable_size);
-					insert_variable(list_of_Variables[i], $1->getName());
+					none = insert_variable(list_of_Variables[i], $1->getName());
 				}
 			}
 
@@ -640,6 +645,7 @@ statement : var_declaration	{
 
 		//code
 		asmCode<<"\tpush "+$2->getAsmSymbol()+"\n";
+		asmCode<<"\n;RETURN expression SEMICOLON\n\n";
 
 	  }
 	  ;
