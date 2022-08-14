@@ -39,62 +39,74 @@ Line 7: statements : statement
 
 
 Line 8: factor: CONST_INT
-5
+0
 
 Line 8:unary_expression : factor
-5
+0
 
 Line 8: term : unary_expression
-5
+0
+
+Line 8: expression_statement 	: expression SEMICOLON
+;
+
+Line 8:factor	: variable
+a
+
+Line 8:unary_expression : factor
+a
+
+Line 8: term : unary_expression
+a
 
 Line 8: factor: CONST_INT
-0
+6
 
 Line 8:unary_expression : factor
-0
+6
 
 Line 8: term : unary_expression
-0
+6
 
-Line 10: factor: CONST_INT
-2
-
-Line 10:unary_expression : factor
-2
-
-Line 10: term : unary_expression
-2
-
-Line 10: expression_statement 	: expression SEMICOLON
+Line 8: expression_statement 	: expression SEMICOLON
 ;
 
-Line 10: statement : expression_statement
-;
+Line 8:unary_expression : factor
 
-Line 10: statements : statement
-;
+
+Line 8: term : unary_expression
+
+
+Line 10:compound_statement : LCURL RCURL 
+{ }
+Line 10: statement : compound_statement
+{}
+
+Line 10: statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement
+for(; L0 L1 L2 L3 6) a
+
+Line 10: statements : statements statement
+ 
+for(;L0 L1 L2 L36)a
 
 Line 11:compound_statement : LCURL statements RCURL 
-{;}
-Line 11: statement : compound_statement
-{;}
+{
+for(;L0 L1 L2 L36)a}
+Line 11: func_definition : type_specifier ID LPAREN RPAREN compound_statement
+int main (  ) {
+for(;L0 L1 L2 L36)a}
 
-Line 11: statements : statements statement
- a
+Line 11: unit : func_definition
+int main(){
+for(;L0 L1 L2 L36)a} 
 
-Line 12:compound_statement : LCURL statements RCURL 
-{a}
-Line 12: func_definition : type_specifier ID LPAREN RPAREN compound_statement
-int main (  ) {a}
-
-Line 12: unit : func_definition
-int main(){a} 
-
-Line 12: program : program unit
+Line 11: program : program unit
 int fun(int a){
-return ;} int main(){a}
+return ;} int main(){
+for(;L0 L1 L2 L36)a}
 
-Line 12: start: program
+Line 11: start: program
 int fun(int a){
-return ;} int main(){a} 
+return ;} int main(){
+for(;L0 L1 L2 L36)a} 
 

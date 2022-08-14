@@ -1,6 +1,7 @@
 %{
 #include<iostream>
 #include<fstream>
+#include <sstream>
 #include<cstdlib>
 #include<cstring>
 #include<cmath>
@@ -531,7 +532,61 @@ statement : var_declaration	{
 		fprintf(logout, "Line %d: statement : compound_statement\n", line);
 		fprintf(logout, "%s\n\n",$1->getName().c_str());
 	  }
-	  | FOR LPAREN expression_statement embeded_expression expression_statement embeded_expression expression embeded_expression RPAREN statement	{
+	  | FOR LPAREN expression_statement embeded_expression {
+
+		/* 
+			init
+		l1:
+			cond - true - l2
+			flase - jmp l4
+		l3:
+			inc
+			jmp l1
+		l2:
+			stmt
+			jmp l3
+		l4:
+				$5
+		*/
+		string label1= newLabel();
+		string label2 = newLabel();
+		string label3 = newLabel();
+		string label4 = newLabel();
+
+		string labels = label1+" "+label2+" "+label3+" "+label4;
+		$$ = new SymbolInfo(labels, "non");
+
+		asmCode<<label1+":\n";
+	  } expression_statement embeded_expression {
+		stringstream ss($5->getName());
+		string label1,label2 ,label3,label4 ;
+		ss>>label1;
+		ss>>label2;
+		ss>>label3;
+		ss>>label4;
+
+		//\tmov ax, "+$3->getSymbol()+(string)"\n\tcmp ax, 0\n\tje "+label1+(string)
+		asmCode<<"\tmov ax,  " + $6->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label4+"\n\tjmp "+label2+"\n";
+		asmCode<<label3+":\n";
+	  } expression embeded_expression RPAREN {
+		stringstream ss($5->getName());
+		string label1,label2 ,label3,label4 ;
+		ss>>label1;
+		ss>>label2;
+		ss>>label3;
+		ss>>label4;
+		asmCode<< "\tjmp "+label1+"\n";
+		asmCode<<label2+":\n";
+	  } statement	{
+		stringstream ss($5->getName());
+		string label1,label2 ,label3,label4 ;
+		ss>>label1;
+		ss>>label2;
+		ss>>label3;
+		ss>>label4;
+		asmCode<< "\tjmp "+label3+"\n";
+		asmCode<<label4+":\n";
+
 		$$ = new SymbolInfo("\nfor("+$3->getName()+$5->getName()+$7->getName()+")"+$10->getName(), "NON_TERMINAL");
 		fprintf(logout, "Line %d: statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement\n", line);
 		fprintf(logout,"for(%s %s %s) %s\n\n",$3->getName().c_str(),$5->getName().c_str(),$7->getName().c_str(),$10->getName().c_str());
@@ -543,21 +598,7 @@ statement : var_declaration	{
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
 
-		//codes
-		if(($3->getAsmSymbol() != ";") && ($5->getAsmSymbol() != ";")){
-			//cout<<"ok";
-			string label1 = newLabel();
-            string label2 = newLabel();
-
-			//asmCode<<"\t"+label1+":\n"+$5->getCode()+"\tmov ax, "+$5->getSymbol()+"\n\tcmp ax, 0\n\tje "+label2+"\n";
-			//asmCode<<$10->getCode()+$7->getCode()+"\tjmp "+label1+"\n\t"+label2+":\n";
-        
-           // $$->setCode("\t"+label1+(string)":\n"+$5->getCode()+(string)"\tmov ax, "+$5->getSymbol()+(string)"\n\tcmp ax, 0\n\tje "+label2+(string)"\n");
-           // $$->setCode($$->getCode()+$10->getCode()+$7->getCode()+(string)"\tjmp "+label1+(string)"\n\t"+label2+(string)":\n");
-
-		}else{
-			cout<<"not Ok";
-		}
+		
 	  }
 	  | condition_rule %prec LOWER_THAN_ELSE	{
 		$$ = new SymbolInfo("", "NON_TERMINAL");
