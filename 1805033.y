@@ -212,10 +212,55 @@ func_declaration : type_specifier id fun_start LPAREN parameter_list RPAREN dec_
 }
 		;
 		 
-func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN def_end compound_statement	{
+func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
+		//data segment
+		//main
+
+		int paramSize = parameter_list.size();
+		int var = 4+(2*paramSize);
+		if($2->getName()="main"){
+			asmCode<<"\n;main start\n\n";
+			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
+		}else{
+			asmCode<<"\n;function start\n\n";
+
+			asmCode<<$2->getName()+ " proc\n\n"; //fun proc
+			asmCode<<"\tpush bp\n";  // push bp
+			asmCode<<"\tmov bp, sp\n"; // bp = sp
+			asmCode<< "\tadd bp, "var +" \n";
+			for(int count = 0; count < parameter_list.size(); count++){
+					parameter_list[count].parameter_name;
+                    	
+				}
+			
+		}
+
+} def_end compound_statement	{
+
+	if($2->getName()="main"){
+			asmCode<<"\n;DOS EXIT\n\n"
+			asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
+	}else{
+		asmCode<<"mov "
+		asmCode<<"\tmov sp, bp\n";
+		asmCode<<"\tpop bp"\n;
+		asmCode<<"\tret\n";
+		asmCode<<$2->getName()+ " endp\n\t\n\n";
+	}
+		
+
+// ;DOS EXIT
+//     MOV AH, 4CH
+//     INT 21H
+
+// MAIN ENDP
+// END MAIN
+
 		$$ = new SymbolInfo($1->getName()+" "+$2->getName()+"("+$5->getName()+")"+$8->getName(), "NON_TERMINAL");
 		fprintf(logout,"Line %d: func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n", line);
 		fprintf(logout,"%s %s ( %s ) %s\n\n",$1->getName().c_str(),$2->getName().c_str(),$5->getName().c_str(),$8->getName().c_str());
+
+
 }
 		| type_specifier id fun_start LPAREN RPAREN def_end compound_statement	{
 		$$ = new SymbolInfo($1->getName()+" "+$2->getName()+"("+")"+$7->getName(), "NON_TERMINAL");
