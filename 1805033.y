@@ -218,7 +218,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 
 		int paramSize = parameter_list.size();
 		int var = 4+(2*paramSize);
-		if($2->getName()="main"){
+		if($2->getName()=="main"){
 			asmCode<<"\n;main start\n\n";
 			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 		}else{
@@ -227,25 +227,19 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 			asmCode<<$2->getName()+ " proc\n\n"; //fun proc
 			asmCode<<"\tpush bp\n";  // push bp
 			asmCode<<"\tmov bp, sp\n"; // bp = sp
-			asmCode<< "\tadd bp, "var +" \n";
-			for(int count = 0; count < parameter_list.size(); count++){
-					parameter_list[count].parameter_name;
-                    	
-				}
-			
+			asmCode<< "\tadd bp, "+ to_string(var) +" \n";
 		}
 
 } def_end compound_statement	{
 
-	if($2->getName()="main"){
-			asmCode<<"\n;DOS EXIT\n\n"
+	if($2->getName()=="main"){
+			asmCode<<"\n;DOS EXIT\n\n";
 			asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
 	}else{
-		asmCode<<"mov "
-		asmCode<<"\tmov sp, bp\n";
-		asmCode<<"\tpop bp"\n;
+		
+		asmCode<<"\tpop bp\n";
 		asmCode<<"\tret\n";
-		asmCode<<$2->getName()+ " endp\n\t\n\n";
+		asmCode<<$2->getName()+ " endp\n\t";
 	}
 		
 
@@ -256,16 +250,30 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 // MAIN ENDP
 // END MAIN
 
-		$$ = new SymbolInfo($1->getName()+" "+$2->getName()+"("+$5->getName()+")"+$8->getName(), "NON_TERMINAL");
-		fprintf(logout,"Line %d: func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement\n", line);
-		fprintf(logout,"%s %s ( %s ) %s\n\n",$1->getName().c_str(),$2->getName().c_str(),$5->getName().c_str(),$8->getName().c_str());
-
-
 }
-		| type_specifier id fun_start LPAREN RPAREN def_end compound_statement	{
-		$$ = new SymbolInfo($1->getName()+" "+$2->getName()+"("+")"+$7->getName(), "NON_TERMINAL");
-		fprintf(logout,"Line %d: func_definition : type_specifier ID LPAREN RPAREN compound_statement\n", line);
-		fprintf(logout,"%s %s (  ) %s\n\n",$1->getName().c_str(),$2->getName().c_str(),$7->getName().c_str());
+		| type_specifier id fun_start LPAREN RPAREN {
+			if($2->getName()=="main"){
+				asmCode<<"\n;main start\n\n";
+				asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
+			}else{
+				asmCode<<"\n;function start\n\n";
+
+				asmCode<<$2->getName()+ " proc\n\n"; //fun proc
+				asmCode<<"\tpush bp\n";  // push bp
+				
+			}
+		} def_end compound_statement	{
+			if($2->getName()=="main"){
+				asmCode<<"\n;DOS EXIT\n\n";
+				asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
+			}else{
+				
+				asmCode<<"\tpop bp\n";
+				asmCode<<"\tret\n";
+				asmCode<<$2->getName()+ " endp\n\t";
+			}
+		
+
 
 		}
  		;				
@@ -418,11 +426,7 @@ compound_statement : LCURL start_scope statements RCURL	{
  		    ;
 start_scope: {
 
-			//test------------------
-			// newParameter.parameter_type = "int";
-			// newParameter.parameter_name = "l";
-			// parameter_list.push_back(newParameter);
-			//enter new scope
+			
 			table.enterScope();
 			scope++;
 
@@ -431,10 +435,15 @@ start_scope: {
 
 			}else{
 				for(int count = 0; count < parameter_list.size(); count++){
-					newVariable.variable_name = parameter_list[count].parameter_name;
-                    newVariable.variable_size = -1;
+					//newVariable.variable_name = parameter_list[count].parameter_name;
+                    //newVariable.variable_size = -1;
                     
-					list_of_local.push_back(insert_variable(newVariable, parameter_list[count].parameter_type));
+					//list_of_local.push_back(insert_variable(newVariable, parameter_list[count].parameter_type));
+				SymbolInfo* newSymbol = new SymbolInfo(parameter_list[count].parameter_name, parameter_list[count].parameter_type);
+				newSymbol->setReturnType(parameter_list[count].parameter_type);
+				string val = to_string(-2*count)+"[bp]";
+				newSymbol->setAsmSymbol(val);
+				table.insertInTable_Symbol(newSymbol);
 				}
 			}
 			parameter_list.clear();

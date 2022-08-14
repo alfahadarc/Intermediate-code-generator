@@ -1,6 +1,9 @@
 Line 1: parameter_list  : type_specifier ID
 int a
 
+Line 1: parameter_list  : parameter_list COMMA type_specifier ID
+int a , int b
+
 Line 3:factor	: variable
 a
 
@@ -9,6 +12,18 @@ a
 
 Line 3: term : unary_expression
 a
+
+Line 3:factor	: variable
+b
+
+Line 3:unary_expression : factor
+b
+
+Line 3: term : unary_expression
+b
+
+Line 3: simple_expressio : simple_expression ADDOP term
+a + b
 
 Line 3:statement: RETURN expression SEMICOLON
 return ;
@@ -20,17 +35,11 @@ return ;
 Line 4:compound_statement : LCURL statements RCURL 
 {
 return ;}
-Line 4: func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
-int fun ( int a ) {
-return ;}
-
 Line 4: unit : func_definition
-int fun(int a){
-return ;} 
+int 
 
 Line 4: program : unit
-int fun(int a){
-return ;} 
+int 
 
 Line 7: statement : var_declaration
 
@@ -38,75 +47,14 @@ Line 7: statement : var_declaration
 Line 7: statements : statement
 
 
-Line 8: factor: CONST_INT
-0
-
-Line 8:unary_expression : factor
-0
-
-Line 8: term : unary_expression
-0
-
-Line 8: expression_statement 	: expression SEMICOLON
-;
-
-Line 8:factor	: variable
-a
-
-Line 8:unary_expression : factor
-a
-
-Line 8: term : unary_expression
-a
-
-Line 8: factor: CONST_INT
-6
-
-Line 8:unary_expression : factor
-6
-
-Line 8: term : unary_expression
-6
-
-Line 8: expression_statement 	: expression SEMICOLON
-;
-
-Line 8:unary_expression : factor
-
-
-Line 8: term : unary_expression
-
-
-Line 10:compound_statement : LCURL RCURL 
-{ }
-Line 10: statement : compound_statement
+Line 8:compound_statement : LCURL statements RCURL 
 {}
+Line 8: unit : func_definition
+int 
 
-Line 10: statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement
-for(; L0 L1 L2 L3 6) a
+Line 8: program : program unit
+int int
 
-Line 10: statements : statements statement
- 
-for(;L0 L1 L2 L36)a
-
-Line 11:compound_statement : LCURL statements RCURL 
-{
-for(;L0 L1 L2 L36)a}
-Line 11: func_definition : type_specifier ID LPAREN RPAREN compound_statement
-int main (  ) {
-for(;L0 L1 L2 L36)a}
-
-Line 11: unit : func_definition
-int main(){
-for(;L0 L1 L2 L36)a} 
-
-Line 11: program : program unit
-int fun(int a){
-return ;} int main(){
-for(;L0 L1 L2 L36)a}
-
-Line 11: start: program
-int fun(int a){
-return ;} int main(){
-for(;L0 L1 L2 L36)a} 
+Line 8: start: program
+int int 
 
