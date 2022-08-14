@@ -47,14 +47,59 @@ Line 7: statement : var_declaration
 Line 7: statements : statement
 
 
-Line 8:compound_statement : LCURL statements RCURL 
-{}
-Line 8: unit : func_definition
+Line 8: factor: CONST_INT
+2
+
+Line 8:unary_expression : factor
+2
+
+Line 8: term : unary_expression
+2
+
+Line 8: arguments : logic_expression
+ 
+
+Line 8: factor: CONST_INT
+3
+
+Line 8:unary_expression : factor
+3
+
+Line 8: term : unary_expression
+3
+
+Line 8: arguments : arguments COMMA logic_expression
+ , 
+
+Line 8: argument_list : arguments
+, 
+
+Line 8:factor: ID LPAREN argument_list RPAREN
+fun(,)
+
+Line 8:unary_expression : factor
+fun(,)
+
+Line 8: term : unary_expression
+fun(,)
+
+Line 8: expression_statement 	: expression SEMICOLON
+;
+
+Line 8: statement : expression_statement
+;
+
+Line 8: statements : statements statement
+ ;
+
+Line 9:compound_statement : LCURL statements RCURL 
+{;}
+Line 9: unit : func_definition
 int 
 
-Line 8: program : program unit
+Line 9: program : program unit
 int int
 
-Line 8: start: program
+Line 9: start: program
 int int 
 

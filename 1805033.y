@@ -233,7 +233,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 } def_end compound_statement	{
 
 	if($2->getName()=="main"){
-			asmCode<<"\n;DOS EXIT\n\n";
+			asmCode<<"\n;DOS EXIT\n";
 			asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
 	}else{
 		
@@ -739,7 +739,7 @@ statement : var_declaration	{
 		}
 
 		//code
-		asmCode<<"\tpush "+$2->getAsmSymbol()+"\n";
+		asmCode<<"\tmov 2[bp], "+$2->getAsmSymbol()+"\n";
 		asmCode<<"\n;RETURN expression SEMICOLON\n\n";
 
 	  }
@@ -1266,27 +1266,47 @@ factor	: variable {
 		}
 
 		if(allGood){
-			string temp1 = newTemp();
-			data_segment_list.push_back(temp1+" dw ?");
-			asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n";
-			cout<<"\tpush ax\n\tpush bx\n\tpush address\n";
 
-			for(int i=0; i<list_of_temp.size(); i++){
-				asmCode<<"\tpush "+list_of_temp[i]+"\n";
-				cout<<"\tpush "+list_of_temp[i]+"\n";
+
+			//ret-ar1-ar2-arg3
+			asmCode<<"\tpush 1\n";
+			for(int count =0; count < list_of_temp.size(); count++){
+				asmCode<<"\tpush "+list_of_temp[count] + " \n";
 			}
 
-			asmCode<<"\tcall "+temp->getAsmSymbol()+"\n";
-			cout<<"\tcall "+temp->getAsmSymbol()+"\n";
+			asmCode<<"\tcall "+$1->getName()+"\n";
 
-			if(temp->getReturnType()!="void"){
-				asmCode<<"\tpop "+temp1+"\n";
-				cout<<"\tpop "+temp1+"\n";
+			for(int count = list_of_temp.size()-1; count >= 0; count--){
+				asmCode<<"\tpop "+list_of_temp[count] + " \n";
 			}
+			string tempVar = newTemp();
+			data_segment_list.push_back(tempVar+" dw ?");
+			asmCode<<"\tpop "+tempVar+"\n";
+			$$->setAsmSymbol(tempVar);
 
-			asmCode<<"\tpop address\n\tpop bx\n\tpop ax\n";
-			cout<<"\tpop address\n\tpop bx\n\tpop ax\n";
-			$$->setAsmSymbol(temp1);
+
+
+			// string temp1 = newTemp();
+			// data_segment_list.push_back(temp1+" dw ?"); 
+			// asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n";
+			// cout<<"\tpush ax\n\tpush bx\n\tpush address\n";
+
+			// for(int i=0; i<list_of_temp.size(); i++){
+			// 	asmCode<<"\tpush "+list_of_temp[i]+"\n";
+			// 	cout<<"\tpush "+list_of_temp[i]+"\n";
+			// }
+
+			// asmCode<<"\tcall "+temp->getAsmSymbol()+"\n";
+			// cout<<"\tcall "+temp->getAsmSymbol()+"\n";
+
+			// if(temp->getReturnType()!="void"){
+			// 	asmCode<<"\tpop "+temp1+"\n";
+			// 	cout<<"\tpop "+temp1+"\n";
+			// }
+
+			// asmCode<<"\tpop address\n\tpop bx\n\tpop ax\n";
+			// cout<<"\tpop address\n\tpop bx\n\tpop ax\n";
+			// $$->setAsmSymbol(temp1);
 		}
 		argument_list.clear();
 		list_of_temp.clear();
