@@ -74,7 +74,7 @@ string insert_variable(variable_array var , string type){
 	newSymbol->setAsmSymbol(name);
 
 	
-
+	
 	if(var.variable_size == -1){
 		name = name+ " dw ?" ;
 		data_segment_list.push_back(name);
@@ -153,13 +153,84 @@ void yyerror(const char *s)
 
 %%
  //start : INT ID SEMICOLON {printf("yes done ");table.insertInTable_Symbol(yylval);printf("%s\n", $2->getName().c_str());cout<<yylval->getName(); }
- start : program
+ start :{
+
+	//start asm
+	asmCode<<".model small\n.stack 100h\n.data\n\n";
+	
+
+	asmCode<<"\n.code\n\n";
+
+ } program
 
 	{
 		//write your code in this block in all the similar blocks below
-		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
 		 fprintf(logout, "Line %d: start: program\n", line);
-		 fprintf(logout,"%s \n\n",$1->getName().c_str());
+		 
+		
+
+		 //println
+
+		asmCode<<";println function\n";
+		 asmCode<<"\nprintln proc\n";
+		 asmCode<<"\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush bp\n\n"; //push regi
+		 asmCode<<"\tmov bp, sp\n\tmov ax, [bp+12]\n";
+		
+		asmCode<<"\n;negative check\n";
+		string poslabel = newLabel();
+		asmCode<<"\tcmp ax, 0\n";
+		asmCode<<"\tjge "+poslabel+"\n";
+
+		//negative
+		asmCode<<"\tpush ax\n";
+		asmCode<<"\tmov dl, '-'\n";
+		asmCode<<"\tmov ah, 2\n\tint 21h\n";
+		asmCode<<"\tpop ax\n\tneg ax\n";
+
+		//digits loop
+		asmCode<<"\t"+poslabel+":\n";
+		asmCode<<"\tmov cx, 0\n\tmov bx, 10D\n";
+
+		string looplabel= newLabel();
+		asmCode<<"\t"+looplabel+":\n";
+		asmCode<<"\t\tmov dx, 0\n";
+		asmCode<<"\t\tdiv bx\n";
+		asmCode<<"\t\tpush dx\n";
+		asmCode<<"\t\tinc cx\n";
+		asmCode<<"\t\tcmp ax, 0\n";
+		asmCode<<"\t\tjne "+looplabel+"\n";
+
+		asmCode<<"\n;printing\n";
+		asmCode<<"\tmov ah, 2\n";
+		string label = newLabel();
+		asmCode<<"\t"+label+":\n";
+		asmCode<<"\t\tpop dx\n";
+		asmCode<<"\t\tadd dl, '0'\n";
+		asmCode<<"\t\tint 21h\n\t\tloop "+label+"\n";
+		asmCode<<"\tmov dl, 20h\n\tint 21h\n";
+
+		//new line
+// 		CR EQU 0DH
+// LF EQU 0AH
+// 		MOV AH, 2
+//     MOV DL, 0DH
+//     INT 21H
+//     MOV DL, 0AH
+//     INT 21H
+//     RET
+
+		asmCode<<"\tmov ah, 2\n\tmov dl, 0dh\n\tint 21h\n\tmov dl, 0ah\n\tint 21h\n";
+
+		//regi back
+		asmCode<<"\n\tpop bp\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\n"; //pop regi
+		asmCode<<"\tret\nprintln endp\n";
+		asmCode<<"end main\n";
+		//save all data segment var
+		for(int i = 0; i < data_segment_list.size(); i++ ){
+			asmCode<<"\t"+data_segment_list[i]+"\n";
+		}
+		data_segment_list.clear();
+
 	
 	}
 	; 
@@ -722,7 +793,7 @@ statement : var_declaration	{
             }
 
 		//asm code
-		asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n\tpush "+asmVar+"\n\tcall println\n\tpop address\n\tpop bx\n\tpop ax\n";
+		asmCode<<"\tpush "+asmVar+"\n\tcall println\n";
 
 
 
@@ -781,7 +852,7 @@ expression_statement 	: SEMICOLON	{
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
 		//code 
-			$$->setAsmSymbol($$->getAsmSymbol());
+			$$->setAsmSymbol($1->getAsmSymbol());
 			}
 			;
 	  
@@ -914,6 +985,7 @@ logic_expression : rel_expression {
 			//type propagation
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 }	
 		 | rel_expression LOGICOP rel_expression {
 			$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -986,19 +1058,21 @@ rel_expression	: simple_expression {
             string temp = newTemp();
             data_segment_list.push_back(temp+" dw ?");
 
-            
+            asmCode<<"\n;relational exp\n";
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
 			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
 
             if($2->getName() == "<") {
+				asmCode<<"\n;relational exp <\n";
 
 				asmCode<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				//cout<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
+				//cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
 
             } else if($2->getName() == "<=") {
+				asmCode<<"\n;relational exp <=\n";
 				asmCode<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				cout<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
@@ -1007,18 +1081,21 @@ rel_expression	: simple_expression {
 
 			
             } else if($2->getName() == ">") {
+				asmCode<<"\n;relational exp >\n";
 				asmCode<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				cout<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
 				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
 			} else if($2->getName() == ">=") {
+				asmCode<<"\n;relational exp >=\n";
 				asmCode<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				cout<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
 				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
                
 			} else if($2->getName() == "==") {
+				asmCode<<"\n;relational exp ==\n";
 				asmCode<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				cout<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
@@ -1027,6 +1104,7 @@ rel_expression	: simple_expression {
               
 			} else {
 				// !=
+				asmCode<<"\n;relational exp !=\n";
 				asmCode<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				cout<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
@@ -1035,6 +1113,7 @@ rel_expression	: simple_expression {
                           }
 
             $$->setAsmSymbol(temp);
+			asmCode<<"\n;relational exp end\n";
 		}
 		;
 				

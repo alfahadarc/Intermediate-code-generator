@@ -1,105 +1,76 @@
-Line 1: parameter_list  : type_specifier ID
-int a
+Line 4: statement : var_declaration
 
-Line 1: parameter_list  : parameter_list COMMA type_specifier ID
-int a , int b
 
-Line 3:factor	: variable
-a
+Line 4: statements : statement
 
-Line 3:unary_expression : factor
-a
 
-Line 3: term : unary_expression
-a
+Line 5: factor: CONST_INT
+0
 
-Line 3:factor	: variable
-b
+Line 5:unary_expression : factor
+0
 
-Line 3:unary_expression : factor
-b
+Line 5: term : unary_expression
+0
 
-Line 3: term : unary_expression
-b
+Line 5: expression_statement 	: expression SEMICOLON
+;
 
-Line 3: simple_expressio : simple_expression ADDOP term
-a + b
+Line 5:factor	: variable
+i
 
-Line 3:statement: RETURN expression SEMICOLON
-return ;
+Line 5:unary_expression : factor
+i
 
-Line 3: statements : statement
+Line 5: term : unary_expression
+i
 
-return ;
+Line 5: factor: CONST_INT
+10
 
-Line 4:compound_statement : LCURL statements RCURL 
-{
-return ;}
-Line 4: unit : func_definition
-int 
+Line 5:unary_expression : factor
+10
 
-Line 4: program : unit
-int 
+Line 5: term : unary_expression
+10
 
-Line 7: statement : var_declaration
+Line 5: expression_statement 	: expression SEMICOLON
+;
 
+Line 5:unary_expression : factor
+
+
+Line 5: term : unary_expression
+
+
+Line 7:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(i);
 
 Line 7: statements : statement
 
+println(i);
 
-Line 8: factor: CONST_INT
-2
+Line 8:compound_statement : LCURL statements RCURL 
+{
+println(i);}
+Line 8: statement : compound_statement
+{
+println(i);}
 
-Line 8:unary_expression : factor
-2
-
-Line 8: term : unary_expression
-2
-
-Line 8: arguments : logic_expression
- 
-
-Line 8: factor: CONST_INT
-3
-
-Line 8:unary_expression : factor
-3
-
-Line 8: term : unary_expression
-3
-
-Line 8: arguments : arguments COMMA logic_expression
- , 
-
-Line 8: argument_list : arguments
-, 
-
-Line 8:factor: ID LPAREN argument_list RPAREN
-fun(,)
-
-Line 8:unary_expression : factor
-fun(,)
-
-Line 8: term : unary_expression
-fun(,)
-
-Line 8: expression_statement 	: expression SEMICOLON
-;
-
-Line 8: statement : expression_statement
-;
+Line 8: statement: FOR LPAREN expression_statement expression_statement expression RPAREN statement
+for(; L0 L1 L2 L3 10) i
 
 Line 8: statements : statements statement
- ;
+ 
+for(;L0 L1 L2 L310)i
 
 Line 9:compound_statement : LCURL statements RCURL 
-{;}
+{
+for(;L0 L1 L2 L310)i}
 Line 9: unit : func_definition
 int 
 
-Line 9: program : program unit
-int int
+Line 9: program : unit
+int 
 
 Line 9: start: program
-int int 
-
