@@ -288,7 +288,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 		//main
 
 		int paramSize = parameter_list.size();
-		int var = 4+(2*paramSize);
+		int var = 2+(2*paramSize);
 		if($2->getName()=="main"){
 			asmCode<<"\n;main start\n\n";
 			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
@@ -377,6 +377,7 @@ dec_end: {
         		newSymbol->addParameter(parameter_list[i].parameter_type, parameter_list[i].parameter_name);
     		}
 			table.insertInTable_Symbol(newSymbol);
+			cout<<"\n line: "+to_string(line)+" "+to_string(newSymbol->getArraySize())+" "+newSymbol->getName();
 		}
 }
 def_end: {
@@ -784,15 +785,19 @@ statement : var_declaration	{
                     asmVar = "";  // no id 
                 }
 		}
-		if((temp!=NULL) && (temp->getArraySize()!=-1)) { 
-			//found but not variable
-			error_count++;
-                fprintf(error,"Error at line %d: mismatch \n",line);
+		
+		// if((temp!=NULL) && (temp->getArraySize()!=-1)) { 
+		// 	cout<<"na dhuki nai";
+		// 	//found but not variable
+		// 	error_count++;
+        //         fprintf(error,"Error at line %d: mismatch \n",line);
 
-                asmVar = "";  // no id available
-            }
+        //         asmVar = "";  // no id available
+        //     }
 
 		//asm code
+		
+		asmCode<<"\n ;before push asmvar for println\n";
 		asmCode<<"\tpush "+asmVar+"\n\tcall println\n";
 
 
@@ -810,7 +815,10 @@ statement : var_declaration	{
 		}
 
 		//code
-		asmCode<<"\tmov 2[bp], "+$2->getAsmSymbol()+"\n";
+		asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n";
+		asmCode<<"\tmov 2[bp], ax\n";
+		asmCode<<"\tpop bp\n";
+		asmCode<<"\tret\n";
 		asmCode<<"\n;RETURN expression SEMICOLON\n\n";
 
 	  }
@@ -1351,41 +1359,20 @@ factor	: variable {
 			asmCode<<"\tpush 1\n";
 			for(int count =0; count < list_of_temp.size(); count++){
 				asmCode<<"\tpush "+list_of_temp[count] + " \n";
+				//cout<<list_of_temp[count];
 			}
 
 			asmCode<<"\tcall "+$1->getName()+"\n";
 
+			//string garbage = newTemp();
+			//data_segment_list.push_back(garbage+" dw ?");
 			for(int count = list_of_temp.size()-1; count >= 0; count--){
-				asmCode<<"\tpop "+list_of_temp[count] + " \n";
+				asmCode<<"\tpop ax \n";
 			}
 			string tempVar = newTemp();
 			data_segment_list.push_back(tempVar+" dw ?");
 			asmCode<<"\tpop "+tempVar+"\n";
 			$$->setAsmSymbol(tempVar);
-
-
-
-			// string temp1 = newTemp();
-			// data_segment_list.push_back(temp1+" dw ?"); 
-			// asmCode<<"\tpush ax\n\tpush bx\n\tpush address\n";
-			// cout<<"\tpush ax\n\tpush bx\n\tpush address\n";
-
-			// for(int i=0; i<list_of_temp.size(); i++){
-			// 	asmCode<<"\tpush "+list_of_temp[i]+"\n";
-			// 	cout<<"\tpush "+list_of_temp[i]+"\n";
-			// }
-
-			// asmCode<<"\tcall "+temp->getAsmSymbol()+"\n";
-			// cout<<"\tcall "+temp->getAsmSymbol()+"\n";
-
-			// if(temp->getReturnType()!="void"){
-			// 	asmCode<<"\tpop "+temp1+"\n";
-			// 	cout<<"\tpop "+temp1+"\n";
-			// }
-
-			// asmCode<<"\tpop address\n\tpop bx\n\tpop ax\n";
-			// cout<<"\tpop address\n\tpop bx\n\tpop ax\n";
-			// $$->setAsmSymbol(temp1);
 		}
 		argument_list.clear();
 		list_of_temp.clear();
