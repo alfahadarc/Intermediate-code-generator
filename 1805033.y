@@ -224,7 +224,7 @@ void yyerror(const char *s)
 		//regi back
 		asmCode<<"\n\tpop bp\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\n"; //pop regi
 		asmCode<<"\tret\nprintln endp\n";
-		asmCode<<"end main\n";
+		
 		//save all data segment var
 		for(int i = 0; i < data_segment_list.size(); i++ ){
 			asmCode<<"\t"+data_segment_list[i]+"\n";
@@ -1232,7 +1232,7 @@ unary_expression : ADDOP unary_expression  {
 			//code if neg
 			if($1->getName() == "-"){
 				string temp = newTemp();
-				data_segment_list.push_back(temp);
+				data_segment_list.push_back(temp+" dw ?");
 
 				asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
 				cout<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
@@ -1282,7 +1282,7 @@ factor	: variable {
 		if($$->getArraySize()>-1){
 			
 			string temp = newTemp();
-			data_segment_list.push_back(temp);
+			data_segment_list.push_back(temp+" dw ?");
 			asmCode<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
 			cout<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
 			$$->setAsmSymbol(temp);
@@ -1391,6 +1391,7 @@ factor	: variable {
 		}
 		//type
 		$$->setReturnType($2->getReturnType());
+		$$->setAsmSymbol($2->getAsmSymbol());
 	}
 	| CONST_INT {
 		$$ = new SymbolInfo($1->getName(), "NON_TERMINAL");
