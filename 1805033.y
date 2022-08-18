@@ -33,6 +33,7 @@ SymbolTable table(10);
 //function dec and defination check name and return type
 string type_defination, type_declaration;  //type, type_final;
 string name_defination, name_declaration; //name, name_final;
+bool name_main;
 
 //variable structure
 struct variable_array{
@@ -224,6 +225,7 @@ void yyerror(const char *s)
 		//regi back
 		asmCode<<"\n\tpop bp\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\n"; //pop regi
 		asmCode<<"\tret\nprintln endp\n";
+		asmCode<<"end main\n";
 		
 		//save all data segment var
 		for(int i = 0; i < data_segment_list.size(); i++ ){
@@ -286,10 +288,11 @@ func_declaration : type_specifier id fun_start LPAREN parameter_list RPAREN dec_
 func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 		//data segment
 		//main
-
 		int paramSize = parameter_list.size();
 		int var = 2+(2*paramSize);
 		if($2->getName()=="main"){
+			name_main = true;
+			//cout<<"haha with param";
 			asmCode<<"\n;main start\n\n";
 			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 		}else{
@@ -324,6 +327,8 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 }
 		| type_specifier id fun_start LPAREN RPAREN {
 			if($2->getName()=="main"){
+				name_main = true;
+				//cout<<"haha without param";
 				asmCode<<"\n;main start\n\n";
 				asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 			}else{
@@ -377,7 +382,7 @@ dec_end: {
         		newSymbol->addParameter(parameter_list[i].parameter_type, parameter_list[i].parameter_name);
     		}
 			table.insertInTable_Symbol(newSymbol);
-			cout<<"\n line: "+to_string(line)+" "+to_string(newSymbol->getArraySize())+" "+newSymbol->getName();
+			//cout<<"\n line: "+to_string(line)+" "+to_string(newSymbol->getArraySize())+" "+newSymbol->getName();
 		}
 }
 def_end: {
@@ -510,11 +515,14 @@ start_scope: {
 					//newVariable.variable_name = parameter_list[count].parameter_name;
                     //newVariable.variable_size = -1;
                     
-					//list_of_local.push_back(insert_variable(newVariable, parameter_list[count].parameter_type));
+				//insert_variable(newVariable, parameter_list[count].parameter_type);
 				SymbolInfo* newSymbol = new SymbolInfo(parameter_list[count].parameter_name, parameter_list[count].parameter_type);
 				newSymbol->setReturnType(parameter_list[count].parameter_type);
+				newSymbol->setArraySize(-1);
 				string val = to_string(-2*count)+"[bp]";
 				newSymbol->setAsmSymbol(val);
+				//cout<<"\n param inseert \n";
+				//cout<<newSymbol->getName()+ " " + newSymbol->getType() + " " + newSymbol->getAsmSymbol()+ " \n";
 				table.insertInTable_Symbol(newSymbol);
 				}
 			}
@@ -814,11 +822,18 @@ statement : var_declaration	{
 				fprintf(error, "Error at line %d: void function cannot be called as a part of an expression\n", line);
 		}
 
+		if(name_main){
+			//cout<<"hi";
+			//asmCode<<"\n;DOS EXIT\n";
+			//asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
+		}else{
+			asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n";
+			asmCode<<"\tmov 2[bp], ax\n";
+			asmCode<<"\tpop bp\n";
+			asmCode<<"\tret\n";
+		}
 		//code
-		asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n";
-		asmCode<<"\tmov 2[bp], ax\n";
-		asmCode<<"\tpop bp\n";
-		asmCode<<"\tret\n";
+		
 		asmCode<<"\n;RETURN expression SEMICOLON\n\n";
 
 	  }
@@ -932,7 +947,7 @@ variable : id {
 
 		//code gen
 		asmCode<< "\tmov bx, "+$3->getAsmSymbol()+"\n\t"+"add bx, bx"+"\n";
-		cout<<"\tmov bx, "+$3->getAsmSymbol()+"\n\t"+"add bx, bx"+"\n";
+		//cout<<"\tmov bx, "+$3->getAsmSymbol()+"\n\t"+"add bx, bx"+"\n";
 		
 	 }
 	 ;
@@ -946,9 +961,11 @@ expression : logic_expression	{
 
 			$$->setAsmSymbol($1->getAsmSymbol());
 			//$$->setAsmCode($1->getAsmCode());
+			//cout<<"\n exp " + $1->getAsmSymbol() + "\n";
 }
 	   | variable ASSIGNOP logic_expression {
 		$$ = new SymbolInfo("", "NON_TERMINAL"); 
+		
 			
 			//if floating point number is assigned to an integer type variable
 			if($1->getReturnType()!= $3->getReturnType()){
@@ -968,11 +985,12 @@ expression : logic_expression	{
 
 			//code genaration
 			asmCode<<"\n;variable ASSIGNOP logic_expression\n\n";
+			//cout<< to_string(line)+" ask :" + $3->getAsmSymbol();
 			if($1->getArraySize()>-1){
 			
 				string temp = newTemp();
 				data_segment_list.push_back(temp+" dw ?");
-
+				
 				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n";
 				asmCode<<"\tmov "+$1->getAsmSymbol()+"[bx], ax\n\tmov "+temp+", ax\n";
 
@@ -980,6 +998,7 @@ expression : logic_expression	{
 				$$->setAsmSymbol(temp);
 		}else{
 				//variable
+				
 				asmCode<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tmov "+$1->getAsmSymbol()+", ax\n";
                 $$->setAsmSymbol($1->getAsmSymbol());
 			}
@@ -993,6 +1012,7 @@ logic_expression : rel_expression {
 			//type propagation
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 			
 }	
 		 | rel_expression LOGICOP rel_expression {
@@ -1050,6 +1070,7 @@ rel_expression	: simple_expression {
 			//type may be propagate to simple to rel
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 }
 		| simple_expression RELOP simple_expression	{
 		$$ = new SymbolInfo($1->getName() + $2->getName()+ $3->getName(), "NON_TERMINAL");
@@ -1068,46 +1089,35 @@ rel_expression	: simple_expression {
 
             asmCode<<"\n;relational exp\n";
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, "+$3->getAsmSymbol()+"\n";
 
             if($2->getName() == "<") {
 				asmCode<<"\n;relational exp <\n";
 
 				asmCode<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				//cout<<"\tjl "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				//cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
 
             } else if($2->getName() == "<=") {
 				asmCode<<"\n;relational exp <=\n";
 				asmCode<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tjle "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-               
+				               
 
 			
             } else if($2->getName() == ">") {
 				asmCode<<"\n;relational exp >\n";
 				asmCode<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tjg "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
 			} else if($2->getName() == ">=") {
 				asmCode<<"\n;relational exp >=\n";
 				asmCode<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tjge "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-               
+  
 			} else if($2->getName() == "==") {
 				asmCode<<"\n;relational exp ==\n";
 				asmCode<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
               
 			} else {
@@ -1115,8 +1125,6 @@ rel_expression	: simple_expression {
 				asmCode<<"\n;relational exp !=\n";
 				asmCode<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
                 asmCode<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-				cout<<"\tjne "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-				cout<<"\t"+label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
                           }
 
@@ -1131,6 +1139,7 @@ simple_expression : term {
 			//type may be set term to simple_expression
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 			
 }
 		  | simple_expression ADDOP term {
@@ -1156,8 +1165,7 @@ simple_expression : term {
             } else {
                 /* ubtraction */
 				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tsub ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tsub ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
-                $$->setAsmSymbol(temp);
+              $$->setAsmSymbol(temp);
             }
 		  }
 		  ;
@@ -1169,6 +1177,7 @@ term :	unary_expression	{
 			//type may be set term to unary_expression
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 
 }
      |  term MULOP unary_expression	{
@@ -1198,23 +1207,21 @@ term :	unary_expression	{
 			if($2->getName() == "*"){
 				//mul
 				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov bx, "+$3->getAsmSymbol()+"\n\timul bx\n\tmov "+temp+", ax\n";
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov bx, "+$3->getAsmSymbol()+"\n\timul bx\n\tmov "+temp+", ax\n";
-				$$->setAsmSymbol(temp);
+			$$->setAsmSymbol(temp);
 			}else{
 				// div mod
 				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcwd\n";
                 asmCode<<"\tmov bx, "+$3->getAsmSymbol()+"\n\tidiv bx\n";
 
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcwd\n";
-				cout<<"\tmov bx, "+$3->getAsmSymbol()+"\n\tidiv bx\n";
+				
                 
                 if($2->getName() == "/") {
 					asmCode<<"\tmov "+temp+", ax\n";
-					cout<<"\tmov "+temp+", ax\n";
+					
                     
                 } else {
 					asmCode<<"\tmov "+temp+", dx\n";
-					cout<<"\tmov "+temp+", dx\n";
+					
                     
                 }
                 
@@ -1235,8 +1242,7 @@ unary_expression : ADDOP unary_expression  {
 				data_segment_list.push_back(temp+" dw ?");
 
 				asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
-				cout<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tmov "+temp+", ax\n\tneg " + temp+"\n";
-				$$->setAsmSymbol(temp);
+	$$->setAsmSymbol(temp);
 			}else{
 				$$->setAsmSymbol($2->getAsmSymbol());
 			}
@@ -1256,9 +1262,7 @@ unary_expression : ADDOP unary_expression  {
 			asmCode<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
 			asmCode<<"\t"+label1+": \n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
             
-			cout<<"\tmov ax, "+$2->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n";
-			cout<<"\t"+label1+": \n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
-            $$->setAsmSymbol(temp);
+   $$->setAsmSymbol(temp);
 		 }
 		 | factor {
 			$$ = new SymbolInfo($1->getName(), "NON_TERNINAL");
@@ -1267,6 +1271,7 @@ unary_expression : ADDOP unary_expression  {
 			//type propagation
 			$$->setReturnType($1->getReturnType());
 			$$->setAsmSymbol($1->getAsmSymbol());
+			
 		 }
 		 ;
 	
@@ -1284,7 +1289,7 @@ factor	: variable {
 			string temp = newTemp();
 			data_segment_list.push_back(temp+" dw ?");
 			asmCode<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
-			cout<<"\tmov ax, "+ $1->getAsmSymbol()+"[bx]\n\tmov "+temp+", ax\n";
+			
 			$$->setAsmSymbol(temp);
 		}
 
@@ -1373,7 +1378,10 @@ factor	: variable {
 			data_segment_list.push_back(tempVar+" dw ?");
 			asmCode<<"\tpop "+tempVar+"\n";
 			$$->setAsmSymbol(tempVar);
+
+			
 		}
+		
 		argument_list.clear();
 		list_of_temp.clear();
 	}
@@ -1425,16 +1433,14 @@ factor	: variable {
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
 			asmCode<<"\n\t;variable INCOP\n\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "[bx]\n";
-			$$->setAsmSymbol(temp1);
+$$->setAsmSymbol(temp1);
 		}else{
 			//variable
 			temp1 = newTemp();
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
 			asmCode<<"\n\t;variable INCOP\n\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
-			$$->setAsmSymbol(temp1);
+						$$->setAsmSymbol(temp1);
 		}
 	}
 	| variable DECOP {
@@ -1450,7 +1456,7 @@ factor	: variable {
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "[bx]\n";
 			asmCode<<"\n\t;variable DECOP\n\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+" [bx]\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "[bx]\n";
+			
 			$$->setAsmSymbol(temp1);
 		}else{
 			//variable
@@ -1458,7 +1464,7 @@ factor	: variable {
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "\n";
 			asmCode<<"\n\t;variable DECOP\n\n";
-			cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "\n";
+			
 			$$->setAsmSymbol(temp1);
 		}
 	}
@@ -1512,32 +1518,24 @@ int main(int argc,char *argv[])
 	error= fopen(argv[2],"w");//error file
 	fclose(error);
 
-	/* asmCode.open(argv[3]);//asm file
-	asmCode.close();
 
-	optAsmCode.open(argv[4]);//optasm file
-	optAsmCode.close(); */
+	
 
 	
 	logout= fopen(argv[3],"a");
 	error= fopen(argv[2],"a");
-	/* asmCode= fopen(argv[3],"a");
-	optAsmCode= fopen(argv[4],"a"); */
+	
 	
 
 	yyin=input;
 	yyparse();
 	
-	//print table
-	/* fprintf(logout, "\n\n");
-	table.printAllScopeTable();
-	fprintf(logout, "\n\n"); */
-
-	/* fprintf(logout, "Total Line: %d\n",line);
-	fprintf(logout, "Total Error: %d\n", error_count); */
-	//fclose(logout);
+	
 	fclose(error);
-	/* fclose(asmCode); */
+	if(error_count > 0){
+		
+		asmCode<<"error in code\n";
+	}
 
 	//optimizing--------------------------------
 		//freopen("code.asm","r",stdin);

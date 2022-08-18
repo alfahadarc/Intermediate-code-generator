@@ -1,29 +1,39 @@
-Line 3: statement : var_declaration
+Line 1: parameter_list  : type_specifier ID
+int a
 
+Line 3: factor: CONST_INT
+2
+
+Line 3:unary_expression : factor
+2
+
+Line 3: term : unary_expression
+2
+
+Line 3:factor	: variable
+a
+
+Line 3:unary_expression : factor
+a
+
+Line 3: term : term MULOP unary_expression
+2 * a
+
+Line 3:statement: RETURN expression SEMICOLON
+return ;
 
 Line 3: statements : statement
 
+return ;
 
-Line 4:factor	: variable
-y
-
-Line 4:unary_expression : factor
-y
-
-Line 4: term : unary_expression
-y
-
-Line 4:factor	: variable
-z
+Line 4: factor: CONST_INT
+9
 
 Line 4:unary_expression : factor
-z
+9
 
 Line 4: term : unary_expression
-z
-
-Line 4: simple_expressio : simple_expression ADDOP term
-y + z
+9
 
 Line 4: expression_statement 	: expression SEMICOLON
 ;
@@ -32,31 +42,231 @@ Line 4: statement : expression_statement
 ;
 
 Line 4: statements : statements statement
+
+return ; ;
+
+Line 5:compound_statement : LCURL statements RCURL 
+{
+return ;;}
+Line 5: unit : func_definition
+int 
+
+Line 5: program : unit
+int 
+
+Line 7: parameter_list  : type_specifier ID
+int a
+
+Line 7: parameter_list  : parameter_list COMMA type_specifier ID
+int a , int b
+
+Line 9: statement : var_declaration
+
+
+Line 9: statements : statement
+
+
+Line 10:factor	: variable
+a
+
+Line 10:unary_expression : factor
+a
+
+Line 10: term : unary_expression
+a
+
+Line 10: arguments : logic_expression
+ 
+
+Line 10: argument_list : arguments
+ 
+
+Line 10:factor: ID LPAREN argument_list RPAREN
+f()
+
+Line 10:unary_expression : factor
+f()
+
+Line 10: term : unary_expression
+f()
+
+Line 10:factor	: variable
+a
+
+Line 10:unary_expression : factor
+a
+
+Line 10: term : unary_expression
+a
+
+Line 10: simple_expressio : simple_expression ADDOP term
+f() + a
+
+Line 10:factor	: variable
+b
+
+Line 10:unary_expression : factor
+b
+
+Line 10: term : unary_expression
+b
+
+Line 10: simple_expressio : simple_expression ADDOP term
+f()+a + b
+
+Line 10: expression_statement 	: expression SEMICOLON
+;
+
+Line 10: statement : expression_statement
+;
+
+Line 10: statements : statements statement
  ;
 
-Line 5:factor	: variable
+Line 11:factor	: variable
 x
 
-Line 5:unary_expression : factor
+Line 11:unary_expression : factor
 x
 
-Line 5: term : unary_expression
+Line 11: term : unary_expression
 x
 
-Line 5:statement: RETURN expression SEMICOLON
+Line 11:statement: RETURN expression SEMICOLON
 return ;
 
-Line 5: statements : statements statement
+Line 11: statements : statements statement
 ; 
 return ;
 
-Line 6:compound_statement : LCURL statements RCURL 
+Line 12:compound_statement : LCURL statements RCURL 
 {;
 return ;}
-Line 6: unit : func_definition
+Line 12: unit : func_definition
 int 
 
-Line 6: program : unit
+Line 12: program : program unit
+int int
+
+Line 16: statement : var_declaration
+
+
+Line 16: statements : statement
+
+
+Line 17: factor: CONST_INT
+1
+
+Line 17:unary_expression : factor
+1
+
+Line 17: term : unary_expression
+1
+
+Line 17: expression_statement 	: expression SEMICOLON
+;
+
+Line 17: statement : expression_statement
+;
+
+Line 17: statements : statements statement
+ ;
+
+Line 18: factor: CONST_INT
+2
+
+Line 18:unary_expression : factor
+2
+
+Line 18: term : unary_expression
+2
+
+Line 18: expression_statement 	: expression SEMICOLON
+;
+
+Line 18: statement : expression_statement
+;
+
+Line 18: statements : statements statement
+; ;
+
+Line 19:factor	: variable
+a
+
+Line 19:unary_expression : factor
+a
+
+Line 19: term : unary_expression
+a
+
+Line 19: arguments : logic_expression
+ 
+
+Line 19:factor	: variable
+b
+
+Line 19:unary_expression : factor
+b
+
+Line 19: term : unary_expression
+b
+
+Line 19: arguments : arguments COMMA logic_expression
+ , 
+
+Line 19: argument_list : arguments
+, 
+
+Line 19:factor: ID LPAREN argument_list RPAREN
+g(,)
+
+Line 19:unary_expression : factor
+g(,)
+
+Line 19: term : unary_expression
+g(,)
+
+Line 19: expression_statement 	: expression SEMICOLON
+;
+
+Line 19: statement : expression_statement
+;
+
+Line 19: statements : statements statement
+;; ;
+
+Line 20:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(a);
+
+Line 20: statements : statements statement
+;;; 
+println(a);
+
+Line 21: factor: CONST_INT
+0
+
+Line 21:unary_expression : factor
+0
+
+Line 21: term : unary_expression
+0
+
+Line 21:statement: RETURN expression SEMICOLON
+return ;
+
+Line 21: statements : statements statement
+;;;
+println(a); 
+return ;
+
+Line 22:compound_statement : LCURL statements RCURL 
+{;;;
+println(a);
+return ;}
+Line 22: unit : func_definition
 int 
 
-Line 6: start: program
+Line 22: program : program unit
+int int int
+
+Line 23: start: program
