@@ -5,13 +5,13 @@ Line 4: statements : statement
 
 
 Line 6: factor: CONST_INT
-3
+1
 
 Line 6:unary_expression : factor
-3
+1
 
 Line 6: term : unary_expression
-3
+1
 
 Line 6: expression_statement 	: expression SEMICOLON
 ;
@@ -22,32 +22,33 @@ Line 6: statement : expression_statement
 Line 6: statements : statements statement
  ;
 
-Line 7: factor: CONST_INT
-8
-
-Line 7:unary_expression : factor
-8
-
-Line 7: term : unary_expression
-8
-
-Line 7: expression_statement 	: expression SEMICOLON
-;
-
-Line 7: statement : expression_statement
-;
+Line 7:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(i);
 
 Line 7: statements : statements statement
-; ;
+; 
+println(i);
 
 Line 8: factor: CONST_INT
-6
+5
 
 Line 8:unary_expression : factor
-6
+5
 
 Line 8: term : unary_expression
-6
+5
+
+Line 8: factor: CONST_INT
+8
+
+Line 8:unary_expression : factor
+8
+
+Line 8: term : unary_expression
+8
+
+Line 8: simple_expressio : simple_expression ADDOP term
+5 + 8
 
 Line 8: expression_statement 	: expression SEMICOLON
 ;
@@ -56,7 +57,16 @@ Line 8: statement : expression_statement
 ;
 
 Line 8: statements : statements statement
-;; ;
+;
+println(i); ;
+
+Line 9:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(j);
+
+Line 9: statements : statements statement
+;
+println(i);; 
+println(j);
 
 Line 10:factor	: variable
 i
@@ -68,239 +78,393 @@ Line 10: term : unary_expression
 i
 
 Line 10: factor: CONST_INT
-3
+2
 
 Line 10:unary_expression : factor
-3
+2
 
 Line 10: term : unary_expression
-3
+2
 
-Line 12:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(j);
-
-Line 12: statements : statement
-
-println(j);
-
-Line 13:compound_statement : LCURL statements RCURL 
-{
-println(j);}
-Line 13: statement : compound_statement
-{
-println(j);}
-
-Line 15: statement: IF LPAREN expression RPAREN statement
-Line 15: statements : statements statement
-;;; 
-
-Line 15:factor	: variable
+Line 10:factor	: variable
 j
 
-Line 15:unary_expression : factor
+Line 10:unary_expression : factor
 j
 
-Line 15: term : unary_expression
-j
+Line 10: term : term MULOP unary_expression
+2 * j
 
-Line 15: factor: CONST_INT
-8
+Line 10: simple_expressio : simple_expression ADDOP term
+i + 2*j
 
-Line 15:unary_expression : factor
-8
+Line 10: expression_statement 	: expression SEMICOLON
+;
 
-Line 15: term : unary_expression
-8
+Line 10: statement : expression_statement
+;
+
+Line 10: statements : statements statement
+;
+println(i);;
+println(j); ;
+
+Line 11:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(k);
+
+Line 11: statements : statements statement
+;
+println(i);;
+println(j);; 
+println(k);
+
+Line 13:factor	: variable
+k
+
+Line 13:unary_expression : factor
+k
+
+Line 13: term : unary_expression
+k
+
+Line 13: factor: CONST_INT
+9
+
+Line 13:unary_expression : factor
+9
+
+Line 13: term : term MULOP unary_expression
+k % 9
+
+Line 13: expression_statement 	: expression SEMICOLON
+;
+
+Line 13: statement : expression_statement
+;
+
+Line 13: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k); ;
+
+Line 14:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(m);
+
+Line 14: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);; 
+println(m);
+
+Line 16:factor	: variable
+m
+
+Line 16:unary_expression : factor
+m
+
+Line 16: term : unary_expression
+m
+
+Line 16:factor	: variable
+ll
+
+Line 16:unary_expression : factor
+ll
+
+Line 16: term : unary_expression
+ll
+
+Line 16: expression_statement 	: expression SEMICOLON
+;
+
+Line 16: statement : expression_statement
+;
+
+Line 16: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m); ;
 
 Line 17:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(i);
+println(n);
 
-Line 17: statements : statement
+Line 17: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);; 
+println(n);
 
-println(i);
+Line 19:factor	: variable
+i
 
-Line 18:compound_statement : LCURL statements RCURL 
-{
-println(i);}
-Line 18: statement : compound_statement
-{
-println(i);}
+Line 19:unary_expression : factor
+i
 
-Line 21:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(k);
+Line 19: term : unary_expression
+i
 
-Line 21: statements : statement
+Line 19:factor	: variable
+j
 
-println(k);
+Line 19:unary_expression : factor
+j
 
-Line 22:compound_statement : LCURL statements RCURL 
-{
-println(k);}
-Line 22: statement : compound_statement
-{
-println(k);}
+Line 19: term : unary_expression
+j
 
-Line 22: statement: IF LPAREN expression RPAREN statement ELSE statement
+Line 19: expression_statement 	: expression SEMICOLON
+;
+
+Line 19: statement : expression_statement
+;
+
+Line 19: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n); ;
+
+Line 20:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(o);
+
+Line 20: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);; 
+println(o);
+
+Line 22:factor	: variable
+n
+
+Line 22:unary_expression : factor
+n
+
+Line 22: term : unary_expression
+n
+
+Line 22:factor	: variable
+o
+
+Line 22:unary_expression : factor
+o
+
+Line 22: term : unary_expression
+o
+
+Line 22: expression_statement 	: expression SEMICOLON
+;
+
+Line 22: statement : expression_statement
+;
+
 Line 22: statements : statements statement
-;;; L5
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o); ;
 
-Line 24:factor	: variable
-k
+Line 23:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(p);
 
-Line 24:unary_expression : factor
-k
+Line 23: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);; 
+println(p);
 
-Line 24: term : unary_expression
-k
+Line 25:factor	: variable
+n
 
-Line 24: factor: CONST_INT
-6
+Line 25:unary_expression : factor
+n
 
-Line 24:unary_expression : factor
-6
+Line 25: term : unary_expression
+n
 
-Line 24: term : unary_expression
-6
+Line 25:factor	: variable
+o
+
+Line 25:unary_expression : factor
+o
+
+Line 25: term : unary_expression
+o
+
+Line 25: expression_statement 	: expression SEMICOLON
+;
+
+Line 25: statement : expression_statement
+;
+
+Line 25: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p); ;
 
 Line 26:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(k);
+println(p);
 
-Line 26: statements : statement
-
-println(k);
-
-Line 27:compound_statement : LCURL statements RCURL 
-{
-println(k);}
-Line 27: statement : compound_statement
-{
-println(k);}
-
-Line 28:factor	: variable
-j
+Line 26: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);; 
+println(p);
 
 Line 28:unary_expression : factor
-j
+
 
 Line 28: term : unary_expression
-j
 
-Line 28: factor: CONST_INT
-8
 
-Line 28:unary_expression : factor
-8
+Line 28: expression_statement 	: expression SEMICOLON
+;
 
-Line 28: term : unary_expression
-8
+Line 28: statement : expression_statement
+;
 
-Line 30:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(j);
+Line 28: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p); ;
 
-Line 30: statements : statement
+Line 29:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(p);
 
-println(j);
+Line 29: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p);; 
+println(p);
 
-Line 31:compound_statement : LCURL statements RCURL 
-{
-println(j);}
-Line 31: statement : compound_statement
-{
-println(j);}
+Line 31:factor	: variable
+p
 
-Line 32:factor	: variable
-i
+Line 31:unary_expression : factor
+p
 
-Line 32:unary_expression : factor
-i
+Line 31:unary_expression : ADDOP unary_expression
+!-
 
-Line 32: term : unary_expression
-i
+Line 31: term : unary_expression
+!p
 
-Line 32: factor: CONST_INT
-5
+Line 31: expression_statement 	: expression SEMICOLON
+;
 
-Line 32:unary_expression : factor
-5
+Line 31: statement : expression_statement
+;
 
-Line 32: term : unary_expression
-5
+Line 31: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p);;
+println(p); ;
 
-Line 34:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(i);
+Line 32:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
+println(k);
 
-Line 34: statements : statement
+Line 32: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p);;
+println(p);; 
+println(k);
 
-println(i);
+Line 34: factor: CONST_INT
+0
+
+Line 34:unary_expression : factor
+0
+
+Line 34: term : unary_expression
+0
+
+Line 34:statement: RETURN expression SEMICOLON
+return ;
+
+Line 34: statements : statements statement
+;
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p);;
+println(p);;
+println(k); 
+return ;
 
 Line 35:compound_statement : LCURL statements RCURL 
-{
-println(i);}
-Line 35: statement : compound_statement
-{
-println(i);}
-
-Line 38: factor: CONST_INT
-0
-
-Line 38:unary_expression : factor
-0
-
-Line 38: term : unary_expression
-0
-
-Line 38: expression_statement 	: expression SEMICOLON
-;
-
-Line 38: statement : expression_statement
-;
-
-Line 38: statements : statement
-;
-
-Line 39:statement: PRINTLN LPAREN ID RPAREN SEMICOLON
-println(k);
-
-Line 39: statements : statements statement
-; 
-println(k);
-
-Line 40:compound_statement : LCURL statements RCURL 
 {;
-println(k);}
-Line 40: statement : compound_statement
-{;
-println(k);}
-
-Line 40: statement: IF LPAREN expression RPAREN statement ELSE statement
-Line 40: statement: IF LPAREN expression RPAREN statement ELSE statement
-Line 40: statement: IF LPAREN expression RPAREN statement ELSE statement
-Line 40: statements : statements statement
-;;;L5 L9
-
-Line 42: factor: CONST_INT
-0
-
-Line 42:unary_expression : factor
-0
-
-Line 42: term : unary_expression
-0
-
-Line 42:statement: RETURN expression SEMICOLON
-return ;
-
-Line 42: statements : statements statement
-;;;L5L9 
-return ;
-
-Line 43:compound_statement : LCURL statements RCURL 
-{;;;L5L9
+println(i);;
+println(j);;
+println(k);;
+println(m);;
+println(n);;
+println(o);;
+println(p);;
+println(p);;
+println(p);;
+println(k);
 return ;}
-Line 43: unit : func_definition
+Line 35: unit : func_definition
 int 
 
-Line 43: program : unit
+Line 35: program : unit
 int 
 
-Line 44: start: program
+Line 36: start: program

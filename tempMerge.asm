@@ -7,166 +7,188 @@ main proc
 
 ;variable ASSIGNOP logic_expression
 
-	mov ax, 3
+	mov ax, 1
 	mov i1, ax
 
 ;variable ASSIGNOP logic_expression
 
 
+ ;before push asmvar for println
+	push i1
+	call println
+	mov ax, 5
+	add ax, 8
+	mov t0, ax
+
 ;variable ASSIGNOP logic_expression
 
-	mov ax, 8
+	mov ax, t0
 	mov j1, ax
 
 ;variable ASSIGNOP logic_expression
 
 
+ ;before push asmvar for println
+	push j1
+	call println
+	mov ax, 2
+	mov bx, j1
+	imul bx
+	mov t1, ax
+	mov ax, i1
+	add ax, t1
+	mov t2, ax
+
 ;variable ASSIGNOP logic_expression
 
-	mov ax, 6
+	mov ax, t2
 	mov k1, ax
 
 ;variable ASSIGNOP logic_expression
 
 
-;relational exp
-	mov ax, i1
-	cmp ax, 3
+ ;before push asmvar for println
+	push k1
+	call println
+	mov ax, k1
+	cwd
+	mov bx, 9
+	idiv bx
+	mov t3, dx
 
-;relational exp ==
-	je L0
+;variable ASSIGNOP logic_expression
+
+	mov ax, t3
+	mov m1, ax
+
+;variable ASSIGNOP logic_expression
+
+
+ ;before push asmvar for println
+	push m1
+	call println
+
+;relational exp
+	mov ax, m1
+	cmp ax, ll1
+
+;relational exp <=
+	jle L0
 	mov ax, 0
-	mov t0, ax
+	mov t4, ax
 	jmp L1
 	L0:
 	mov ax, 1
-	mov t0, ax
+	mov t4, ax
 	L1:
 
 ;relational exp end
-	mov ax, t0
-	cmp ax, 0
-	je L2
-
- ;before push asmvar for println
-	push j1
-	call println
-L2:
-
-;if then end
-
-
-;relational exp
-	mov ax, j1
-	cmp ax, 8
-
-;relational exp <
-	jl L3
-	mov ax, 0
-	mov t1, ax
-	jmp L4
-	L3:
-	mov ax, 1
-	mov t1, ax
-	L4:
-
-;relational exp end
-	mov ax, t1
-	cmp ax, 0
-	je L5
-
- ;before push asmvar for println
-	push i1
-	call println
-	jmp L6
-L5:
-
- ;before push asmvar for println
-	push k1
-	call println
-L6:
-
-;if then else end
-
-
-;relational exp
-	mov ax, k1
-	cmp ax, 6
-
-;relational exp !=
-	jne L7
-	mov ax, 0
-	mov t2, ax
-	jmp L8
-	L7:
-	mov ax, 1
-	mov t2, ax
-	L8:
-
-;relational exp end
-	mov ax, t2
-	cmp ax, 0
-	je L9
-
- ;before push asmvar for println
-	push k1
-	call println
-	jmp L10
-L9:
-
-;relational exp
-	mov ax, j1
-	cmp ax, 8
-
-;relational exp >
-	jg L11
-	mov ax, 0
-	mov t3, ax
-	jmp L12
-	L11:
-	mov ax, 1
-	mov t3, ax
-	L12:
-
-;relational exp end
-	mov ax, t3
-	cmp ax, 0
-	je L13
-
- ;before push asmvar for println
-	push j1
-	call println
-	jmp L14
-L13:
-
-;relational exp
-	mov ax, i1
-	cmp ax, 5
-
-;relational exp <
-	jl L15
-	mov ax, 0
-	mov t4, ax
-	jmp L16
-	L15:
-	mov ax, 1
-	mov t4, ax
-	L16:
-
-;relational exp end
-	mov ax, t4
-	cmp ax, 0
-	je L17
-
- ;before push asmvar for println
-	push i1
-	call println
-	jmp L18
-L17:
 
 ;variable ASSIGNOP logic_expression
 
+	mov ax, t4
+	mov n1, ax
+
+;variable ASSIGNOP logic_expression
+
+
+ ;before push asmvar for println
+	push n1
+	call println
+
+;relational exp
+	mov ax, i1
+	cmp ax, j1
+
+;relational exp !=
+	jne L2
 	mov ax, 0
+	mov t5, ax
+	jmp L3
+	L2:
+	mov ax, 1
+	mov t5, ax
+	L3:
+
+;relational exp end
+
+;variable ASSIGNOP logic_expression
+
+	mov ax, t5
+	mov o1, ax
+
+;variable ASSIGNOP logic_expression
+
+
+ ;before push asmvar for println
+	push o1
+	call println
+	mov ax, n1
+	cmp ax, 0
+	jne L4
+	mov ax, o1
+	cmp ax, 0
+	jne L4
+	mov ax, 0
+	mov t6, ax
+	jmp L5
+	L4:
+	mov ax, 1
+	mov t6, ax
+	L5:
+
+;variable ASSIGNOP logic_expression
+
+	mov ax, t6
+	mov p1, ax
+
+;variable ASSIGNOP logic_expression
+
+
+ ;before push asmvar for println
+	push p1
+	call println
+	mov ax, n1
+	cmp ax, 0
+	je L6
+	mov ax, o1
+	cmp ax, 0
+	je L6
+	mov ax, 1
+	mov t7, ax
+	jmp L7
+	L6:
+	mov ax, 0
+	mov t7, ax
+	L7:
+
+;variable ASSIGNOP logic_expression
+
+	mov ax, t7
+	mov p1, ax
+
+;variable ASSIGNOP logic_expression
+
+
+ ;before push asmvar for println
+	push p1
+	call println
+	mov ax, p1
+	mov t8, ax
+	inc p1
+
+	;variable INCOP
+
+ ;before push asmvar for println
+	push p1
+	call println
+	mov ax, p1
+	mov t9, ax
+	neg t9
+
+;variable ASSIGNOP logic_expression
+
+	mov ax, t9
 	mov k1, ax
 
 ;variable ASSIGNOP logic_expression
@@ -175,18 +197,6 @@ L17:
  ;before push asmvar for println
 	push k1
 	call println
-L18:
-
-;if then else end
-
-L14:
-
-;if then else end
-
-L10:
-
-;if then else end
-
 
 ;RETURN expression SEMICOLON
 

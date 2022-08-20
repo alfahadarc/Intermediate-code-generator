@@ -403,7 +403,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 		int var = 2+(2*paramSize);
 		if($2->getName()=="main"){
 			name_main = true;
-			//cout<<"haha with param";
+			
 			asmCode<<"\n;main start\n";
 			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 		}else{
@@ -439,7 +439,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 		| type_specifier id fun_start LPAREN RPAREN {
 			if($2->getName()=="main"){
 				name_main = true;
-				//cout<<"haha without param";
+				
 				asmCode<<"\n;main start\n";
 				asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 			}else{
@@ -493,7 +493,7 @@ dec_end: {
         		newSymbol->addParameter(parameter_list[i].parameter_type, parameter_list[i].parameter_name);
     		}
 			table.insertInTable_Symbol(newSymbol);
-			//cout<<"\n line: "+to_string(line)+" "+to_string(newSymbol->getArraySize())+" "+newSymbol->getName();
+			
 		}
 }
 def_end: {
@@ -1151,10 +1151,7 @@ logic_expression : rel_expression {
 				asmCode<<"\tmov ax, 1\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
 				asmCode<<label1+":\n\tmov ax, 0\n\tmov "+temp+", ax\n\t"+label2+":\n";
 
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
-				cout<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tje "+label1+"\n";
-				cout<<"\tmov ax, 1\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
-				cout<<label1+":\n\tmov ax, 0\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				
 
             } else {
                 //  "||" 
@@ -1164,10 +1161,7 @@ logic_expression : rel_expression {
 				asmCode<<"\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
 				asmCode<<label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
 				
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
-				cout<<"\tmov ax, "+$3->getAsmSymbol()+"\n\tcmp ax, 0\n\tjne "+label1+"\n";
-				cout<<"\tmov ax, 0\n\tmov "+temp+", ax\n\tjmp "+label2+"\n\t";
-				cout<<label1+":\n\tmov ax, 1\n\tmov "+temp+", ax\n\t"+label2+":\n";
+				
 
             }
             
@@ -1270,8 +1264,7 @@ simple_expression : term {
 			if($2->getName() == "+") {
                 /*addition */
 				asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tadd ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
-				cout<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tadd ax, "+$3->getAsmSymbol()+"\n\tmov "+temp+", ax\n";
-                $$->setAsmSymbol(temp);
+				$$->setAsmSymbol(temp);
 
             } else {
                 /* ubtraction */
