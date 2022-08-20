@@ -172,7 +172,7 @@ void yyerror(const char *s)
 
 		 //println
 
-		asmCode<<";println function\n";
+		asmCode<<";println function";
 		 asmCode<<"\nprintln proc\n";
 		 asmCode<<"\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush bp\n\n"; //push regi
 		 asmCode<<"\tmov bp, sp\n\tmov ax, [bp+12]\n";
@@ -293,10 +293,10 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 		if($2->getName()=="main"){
 			name_main = true;
 			//cout<<"haha with param";
-			asmCode<<"\n;main start\n\n";
+			asmCode<<"\n;main start\n";
 			asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 		}else{
-			asmCode<<"\n;function start\n\n";
+			asmCode<<"\n;function start\n";
 
 			asmCode<<$2->getName()+ " proc\n\n"; //fun proc
 			asmCode<<"\tpush bp\n";  // push bp
@@ -307,7 +307,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 } def_end compound_statement	{
 
 	if($2->getName()=="main"){
-			asmCode<<"\n;DOS EXIT\n";
+			asmCode<<"\n;DOS EXIT";
 			asmCode<<"\n\n\tmov ah, 4ch\n\tint 21h\nmain endp\n\n";
 	}else{
 		
@@ -329,7 +329,7 @@ func_definition : type_specifier id fun_start LPAREN parameter_list RPAREN {
 			if($2->getName()=="main"){
 				name_main = true;
 				//cout<<"haha without param";
-				asmCode<<"\n;main start\n\n";
+				asmCode<<"\n;main start\n";
 				asmCode<<"main proc\n\tmov ax, @data\n\tmov ds, ax\n\n";
 			}else{
 				asmCode<<"\n;function start\n\n";
@@ -1360,6 +1360,7 @@ factor	: variable {
 		if(allGood){
 
 
+			asmCode<<"\n;id LPAREN argument_list RPAREN\n";
 			//ret-ar1-ar2-arg3
 			asmCode<<"\tpush 1\n";
 			for(int count =0; count < list_of_temp.size(); count++){
@@ -1378,6 +1379,7 @@ factor	: variable {
 			data_segment_list.push_back(tempVar+" dw ?");
 			asmCode<<"\tpop "+tempVar+"\n";
 			$$->setAsmSymbol(tempVar);
+			
 
 			
 		}
@@ -1439,7 +1441,7 @@ $$->setAsmSymbol(temp1);
 			temp1 = newTemp();
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tinc "+$1->getAsmSymbol() + "\n";
-			asmCode<<"\n\t;variable INCOP\n\n";
+			asmCode<<"\n\t;variable INCOP\n";
 						$$->setAsmSymbol(temp1);
 		}
 	}
@@ -1463,7 +1465,7 @@ $$->setAsmSymbol(temp1);
 			temp1 = newTemp();
 			data_segment_list.push_back(temp1+" dw ?");
 			asmCode<<"\tmov ax, "+$1->getAsmSymbol()+"\n\tmov " + temp1+ ", ax\n\tdec "+$1->getAsmSymbol() + "\n";
-			asmCode<<"\n\t;variable DECOP\n\n";
+			asmCode<<"\n\t;variable DECOP\n";
 			
 			$$->setAsmSymbol(temp1);
 		}
