@@ -25,7 +25,7 @@ int temp_count = 0;
 //file 
 extern FILE *yyin;
 FILE *input, *logout, *error;
-ofstream asmCode("asmCode.asm"), optAsmCode("optAsmCode.asm");
+ofstream asmCode("tempMerge.asm"), mergeAsmCode("asmCode.asm");
 
 SymbolTable table(10);
 
@@ -126,6 +126,102 @@ string newLabel(){
 	return str;
 }
 
+void optimize(){
+	 string str;
+    vector<string> code, code_1, code_2;
+
+
+    ifstream infile;
+    infile.open("asmCode.asm");
+    ofstream outfile("optAsmCode.asm");
+
+    while (getline(infile, str, '\n'))
+    {
+        code.push_back(str);
+    }
+
+    int lines = code.size();
+
+    for (int i = 0; i < lines; i++)
+    {
+        if (i == lines - 1)
+        {
+            outfile << code[i] << endl;
+            continue;
+        }
+
+        if ((code[i].length() < 4) || (code[i + 1].length() < 4))
+        {
+            outfile << code[i] << endl;
+            continue;
+        }
+
+        if ((code[i].substr(1, 3) == "mov") && (code[i + 1].substr(1, 3) == "mov"))
+        {
+            // cout << code[i] << endl;
+            stringstream ss_1(code[i]), ss_2(code[i + 1]);
+
+            while (getline(ss_1, str, ' '))
+            {
+                code_1.push_back(str);
+            }
+
+            while (getline(ss_2, str, ' '))
+            {
+                code_2.push_back(str);
+            }
+
+            // cout << code[i] + " ------ " + code[i + 1] << endl;
+
+            if ((code_1[1].substr(0, code_1[1].length() - 1) == code_2[2]) && (code_2[1].substr(0, code_2[1].length() - 1) == code_1[2]))
+            {
+                cout << code_1[1] + " -- " + code_2[2] << endl;
+                outfile << code[i] << endl;
+                i++; // optimization
+            }
+            else
+            {
+                outfile << code[i] << endl;
+            }
+        }
+        else if ((code[i].substr(1, 4) == "push") && (code[i + 1].substr(1, 3) == "pop"))
+        {
+
+            stringstream ss_1(code[i]), ss_2(code[i + 1]);
+
+            while (getline(ss_1, str, ' '))
+            {
+                code_1.push_back(str);
+            }
+
+            while (getline(ss_2, str, ' '))
+            {
+                code_2.push_back(str);
+            }
+
+            if ((code_1[1] == code_2[1]))
+            {
+                cout << code_1[1] + " -- " + code_2[1] << endl;
+                // outfile << code[i] << endl;
+                i++; // optimization
+            }
+            else
+            {
+                outfile << code[i] << endl;
+            }
+        }
+        else
+        {
+            outfile << code[i] << endl;
+        }
+        code_1.clear();
+        code_2.clear();
+    }
+
+    infile.close();
+    outfile.close();
+}
+
 
 void yyerror(const char *s)
 {
@@ -157,58 +253,75 @@ void yyerror(const char *s)
  start :{
 
 	//start asm
-	asmCode<<".model small\n.stack 100h\n.data\n\n";
+	//asmCode<<".model small\n.stack 100h\n.data\n\n";
 	
 
-	asmCode<<"\n.code\n\n";
+	//asmCode<<"\n.code\n\n";
+	mergeAsmCode<<".model small\n.stack 100h\n.data\n\n";
+	
+
 
  } program
 
 	{
 		//write your code in this block in all the similar blocks below
 		 fprintf(logout, "Line %d: start: program\n", line);
+
+		 //save all data segment var
+		for(int i = 0; i < data_segment_list.size(); i++ ){
+			mergeAsmCode<<"\t"+data_segment_list[i]+"\n";
+		}
+		data_segment_list.clear();
+		mergeAsmCode<<"\n.code\n\n";
 		 
-		
+		asmCode.close();
+		ifstream asmCodeRead("tempMerge.asm");
+
+		for(string line; getline(asmCodeRead, line);){
+			mergeAsmCode<<line<<endl;
+		}
+
+		asmCodeRead.close();
 
 		 //println
 
-		asmCode<<";println function";
-		 asmCode<<"\nprintln proc\n";
-		 asmCode<<"\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush bp\n\n"; //push regi
-		 asmCode<<"\tmov bp, sp\n\tmov ax, [bp+12]\n";
+		mergeAsmCode<<";println function";
+		 mergeAsmCode<<"\nprintln proc\n";
+		 mergeAsmCode<<"\tpush ax\n\tpush bx\n\tpush cx\n\tpush dx\n\tpush bp\n\n"; //push regi
+		 mergeAsmCode<<"\tmov bp, sp\n\tmov ax, [bp+12]\n";
 		
-		asmCode<<"\n;negative check\n";
+		mergeAsmCode<<"\n;negative check\n";
 		string poslabel = newLabel();
-		asmCode<<"\tcmp ax, 0\n";
-		asmCode<<"\tjge "+poslabel+"\n";
+		mergeAsmCode<<"\tcmp ax, 0\n";
+		mergeAsmCode<<"\tjge "+poslabel+"\n";
 
 		//negative
-		asmCode<<"\tpush ax\n";
-		asmCode<<"\tmov dl, '-'\n";
-		asmCode<<"\tmov ah, 2\n\tint 21h\n";
-		asmCode<<"\tpop ax\n\tneg ax\n";
+		mergeAsmCode<<"\tpush ax\n";
+		mergeAsmCode<<"\tmov dl, '-'\n";
+		mergeAsmCode<<"\tmov ah, 2\n\tint 21h\n";
+		mergeAsmCode<<"\tpop ax\n\tneg ax\n";
 
 		//digits loop
-		asmCode<<"\t"+poslabel+":\n";
-		asmCode<<"\tmov cx, 0\n\tmov bx, 10D\n";
+		mergeAsmCode<<"\t"+poslabel+":\n";
+		mergeAsmCode<<"\tmov cx, 0\n\tmov bx, 10D\n";
 
 		string looplabel= newLabel();
-		asmCode<<"\t"+looplabel+":\n";
-		asmCode<<"\t\tmov dx, 0\n";
-		asmCode<<"\t\tdiv bx\n";
-		asmCode<<"\t\tpush dx\n";
-		asmCode<<"\t\tinc cx\n";
-		asmCode<<"\t\tcmp ax, 0\n";
-		asmCode<<"\t\tjne "+looplabel+"\n";
+		mergeAsmCode<<"\t"+looplabel+":\n";
+		mergeAsmCode<<"\t\tmov dx, 0\n";
+		mergeAsmCode<<"\t\tdiv bx\n";
+		mergeAsmCode<<"\t\tpush dx\n";
+		mergeAsmCode<<"\t\tinc cx\n";
+		mergeAsmCode<<"\t\tcmp ax, 0\n";
+		mergeAsmCode<<"\t\tjne "+looplabel+"\n";
 
-		asmCode<<"\n;printing\n";
-		asmCode<<"\tmov ah, 2\n";
+		mergeAsmCode<<"\n;printing\n";
+		mergeAsmCode<<"\tmov ah, 2\n";
 		string label = newLabel();
-		asmCode<<"\t"+label+":\n";
-		asmCode<<"\t\tpop dx\n";
-		asmCode<<"\t\tadd dl, '0'\n";
-		asmCode<<"\t\tint 21h\n\t\tloop "+label+"\n";
-		asmCode<<"\tmov dl, 20h\n\tint 21h\n";
+		mergeAsmCode<<"\t"+label+":\n";
+		mergeAsmCode<<"\t\tpop dx\n";
+		mergeAsmCode<<"\t\tadd dl, '0'\n";
+		mergeAsmCode<<"\t\tint 21h\n\t\tloop "+label+"\n";
+		mergeAsmCode<<"\tmov dl, 20h\n\tint 21h\n";
 
 		//new line
 // 		CR EQU 0DH
@@ -220,20 +333,18 @@ void yyerror(const char *s)
 //     INT 21H
 //     RET
 
-		asmCode<<"\tmov ah, 2\n\tmov dl, 0dh\n\tint 21h\n\tmov dl, 0ah\n\tint 21h\n";
+		mergeAsmCode<<"\tmov ah, 2\n\tmov dl, 0dh\n\tint 21h\n\tmov dl, 0ah\n\tint 21h\n";
 
 		//regi back
-		asmCode<<"\n\tpop bp\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\n"; //pop regi
-		asmCode<<"\tret\nprintln endp\n";
-		asmCode<<"end main\n";
+		mergeAsmCode<<"\n\tpop bp\n\tpop dx\n\tpop cx\n\tpop bx\n\tpop ax\n\n"; //pop regi
+		mergeAsmCode<<"\tret\nprintln endp\n";
+		mergeAsmCode<<"end main\n";
 		
-		//save all data segment var
-		for(int i = 0; i < data_segment_list.size(); i++ ){
-			asmCode<<"\t"+data_segment_list[i]+"\n";
-		}
-		data_segment_list.clear();
+		
 
-	
+	//call optmize();
+	mergeAsmCode.close();
+	optimize();
 	}
 	; 
 
